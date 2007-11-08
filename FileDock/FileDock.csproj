@@ -1,0 +1,200 @@
+﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.50727</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{7555A5E2-F180-4E7A-9F0D-6ADC913CA954}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>FileDock</RootNamespace>
+    <AssemblyName>FileDock</AssemblyName>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Deployment" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Config.cs" />
+    <Compile Include="ConfigForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ConfigForm.Designer.cs">
+      <DependentUpon>ConfigForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="CreateDirPanel.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="CreateDirPanel.Designer.cs">
+      <DependentUpon>CreateDirPanel.cs</DependentUpon>
+    </Compile>
+    <Compile Include="CreateFilePanel.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="CreateFilePanel.Designer.cs">
+      <DependentUpon>CreateFilePanel.cs</DependentUpon>
+    </Compile>
+    <Compile Include="DriveButton.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="DriveButton.Designer.cs">
+      <DependentUpon>DriveButton.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FileDockForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FileDockForm.Designer.cs">
+      <DependentUpon>FileDockForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="ConfigForm.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>ConfigForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="CreateDirPanel.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>CreateDirPanel.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="CreateFilePanel.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>CreateFilePanel.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="DriveButton.resx">
+      <DependentUpon>DriveButton.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FileDockForm.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>FileDockForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SearchPanel.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>SearchPanel.cs</DependentUpon>
+    </EmbeddedResource>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
+    </Compile>
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+    <Compile Include="SearchPanel.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="SearchPanel.Designer.cs">
+      <DependentUpon>SearchPanel.cs</DependentUpon>
+    </Compile>
+    <Compile Include="TogglePanel.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AppBars\AppBars.csproj">
+      <Project>{56912831-06FF-4515-AEC5-CAC61D703CDC}</Project>
+      <Name>AppBars</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\xpsp2res_2020.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\xpsp2res_2023.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\SHELL32_9.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\SHELL32_294.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\SHELL32_10.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\SHELL32_11.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\SHELL32_28.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\SHELL32_240.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\SzFM_101.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\SHELL32_144.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <COMReference Include="stdole">
+      <Guid>{00020430-0000-0000-C000-000000000046}</Guid>
+      <VersionMajor>2</VersionMajor>
+      <VersionMinor>0</VersionMinor>
+      <Lcid>0</Lcid>
+      <WrapperTool>primary</WrapperTool>
+      <Isolated>False</Isolated>
+    </COMReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\SHELL32_8.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\SHELL32_12.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\xpsp2res_900.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\SHELL32_290.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\shell32_319.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\shell32_44.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\shell32_186.ico" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

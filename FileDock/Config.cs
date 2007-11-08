@@ -1,0 +1,207 @@
+using System;
+using System.Collections.Generic;
+using System.Text;
+using System.Windows.Forms;
+using Microsoft.Win32;
+
+
+namespace FileDock {
+	class Config {
+		private Dictionary<string, Control> mapControls;
+		private Dictionary<string, string> mapStrings;
+		private Form srcForm;
+
+		public string appName;
+
+		/// <summary>
+		/// Make a new config, link it to the Form F.
+		/// </summary>
+		/// <param name="F">The form to attach to.</param>
+		/// <param name="appName">The application name is used to store this config in the registry under Software\\appName</param>
+		public Config(Form F, string appName) {
+			this.appName = appName;
+			mapStrings = new Dictionary<string, string>();
+			mapControls = new Dictionary<string, Control>();
+			srcForm = F;
+			RefreshControlHash(F);
+		}
+
+		/// <summary>
+		///  Clean up
+		/// </summary>
+		~Config() {
+			mapStrings = null;
+			mapControls = null;
+			srcForm = null;
+		}
+
+		public void SaveToRegistry() {
+			RegistryKey regKey = Registry.CurrentUser.OpenSubKey("Software\\"+this.appName, true);
+			if (regKey == null) {
+				regKey = Registry.CurrentUser.CreateSubKey("Software\\"+this.appName);
+			}
+			foreach (string key in this.Keys) {
+				regKey.SetValue(key, this[key], RegistryValueKind.String);
+			}
+		}
+
+		public void LoadFromRegistry() {
+			RegistryKey regKey = Registry.CurrentUser.OpenSubKey("Software\\" + this.appName, true);
+            if( regKey != null )
+			foreach (string key in regKey.GetValueNames()) {
+				if (regKey.GetValue(key) != null) { this[key] = (string)regKey.GetValue(key); }
+			}
+		}
+
+		public List<string> Keys {
+			get {
+				List<string> ret = new List<string>(mapControls.Keys);
+				foreach (string key in mapStrings.Keys) {
+					if ( ! ret.Contains(key) ) ret.Add(key);
+				}
+				return ret;
+			}
+		}
+
+		/// <summary>
+		/// Starting at the Control parent,
+		/// recursively add element's to our hashtable,
+		/// such that (mapControls[c.Tag] == c) for all c underneath parent in the form's layout tree.
+		/// </summary>
+		/// <param name="parent"></param>
+		/// <returns></returns>
+		private string RefreshControlHash(Control parent) {
+			string s = "";
+			foreach (Control c in parent.Controls) {
+				string key = c.Tag as string;
+				if (key != null) {
+					s += key + ", ";
+					if (mapControls.ContainsKey(key)) {
+						// update the control on the page with the value set in the config
+						SetControlValue(c, GetControlValue(mapControls[key]));
+						// then update our mapping to point to the new control
+						mapControls[key] = c;
+					} else {
+						// if we have a control to use as a backing store then forget about saving the string
+						if (mapStrings.ContainsKey(key)) {
+							SetControlValue(c, mapStrings[key]);
+							mapStrings.Remove(key);
+						}
+						mapControls.Add(key, c);
+					}
+				}
+				s += RefreshControlHash(c);
+			}
+			return s;
+		}
+		/// <summary>
+		/// UpdateFormBinding can be used to point an already loaded config instance at a new form.
+		/// 
+		/// This would be useful is such cases where the form you passed to the constructor must be destroyed for some reason.
+		/// In this case, calling this function will clear out assocations to the old form, and bind to the new one
+		/// </summary>
+		/// <param name="newForm"></param>
+		/// <returns></returns>
+		public void UpdateFormBinding(Form newForm) {
+			mapControls.Clear();
+			srcForm = newForm;
+			RefreshControlHash(newForm);
+		}
+
+
+		/// <summary>
+		/// GetControlValue converts a variety of controls to plain string values.
+		/// Supports custom unpacking for: CheckBox, RadioButton, NumericUpDown, ListBox.
+		/// For all other element types, the .Text member is returned.
+		/// </summary>
+		/// <param name="c">The Control to read from.</param>
+		/// <returns>
+		/// For CheckBox, "True" or "False".
+		/// For RadioButton, "True" or "False".
+		/// For NumericUpDown, the number as a string.
+		/// For ListBox, a comma-seperated list of values.
+		/// For anything else, the value of it's .Text member.
+		/// </returns>
+		public static string GetControlValue(Control c) {
+			if (c.GetType() == typeof(CheckBox)) {
+				return ((CheckBox)c).Checked ? "True" : "False";
+			} else if (c.GetType() == typeof(RadioButton)) {
+				return ((RadioButton)c).Checked ? "True" : "False";
+			} else if (c.GetType() == typeof(NumericUpDown)) {
+				return ((NumericUpDown)c).Value.ToString();
+			} else if (c.GetType() == typeof(ListBox)) {
+				string str = "";
+				foreach (object o in ((ListBox)c).Items) {
+					str += o + ",";
+				}
+				if (str.Length > 0) {
+					str = str.Substring(0, str.Length - 1);
+				}
+				return str;
+			} else {
+				try {
+					return c.Text;
+				} catch (NullReferenceException) {
+					throw (new Exception("(unhandled control type:" + c.GetType().ToString() + ")"));
+				}
+			}
+		}
+
+		/// <summary>
+		/// SetControlValue converts a string to the proper setting of a Control.
+		/// </summary>
+		/// <param name="c">The Control to write to.</param>
+		/// <param name="s">The string value to write.</param>
+		/// <see cref="GetControlValue"></see>
+		public static void SetControlValue(Control c, string s) {
+			if (c.GetType() == typeof(TextBox)) {
+				c.Text = s;
+			} else if (c.GetType() == typeof(CheckBox)) {
+				((CheckBox)c).Checked = s == "True";
+			} else if (c.GetType() == typeof(RadioButton)) {
+				((RadioButton)c).Checked = s == "True";
+			} else if (c.GetType() == typeof(NumericUpDown)) {
+				((NumericUpDown)c).Value = Int32.Parse(s);
+			} else if (c.GetType() == typeof(ListBox)) {
+				string[] items = s.Split(',');
+				//MessageBox.Show("Loading items into list: "+s);
+				((ListBox)c).Items.Clear();
+				foreach (string item in items) {
+					((ListBox)c).Items.Add(item);
+				}
+			} else {
+				try {
+					c.Text = s;
+				} catch (Exception) {
+					// ignore
+				}
+			}
+		}
+
+		/// <summary>
+		/// Map strings to strings.  Using controls on a form as the data source when possible, or fall back on a string store otherwise.
+		/// </summary>
+		public string this[string name] {
+			get {
+				if (mapControls.ContainsKey(name)) {
+					string val = Config.GetControlValue(mapControls[name]);
+					mapStrings[name] = val; // cache the control value in the strings table, in case the form is disposed
+					return val;
+				}
+				if (mapStrings.ContainsKey(name)) {
+					return mapStrings[name];
+				}
+				return null;
+			}
+			set {
+				// always cache the value in the strings table, in case the form is disposed
+				mapStrings[name] = value;
+				
+				// and also store the value in any bound controls
+				if (mapControls.ContainsKey(name)) {
+					Config.SetControlValue(mapControls[name], value);
+				}
+			}
+		}
+	}
+}
