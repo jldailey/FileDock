@@ -29,8 +29,8 @@ namespace FileDock
         private void InitializeComponent()
         {
 					this.components = new System.ComponentModel.Container();
-					System.Windows.Forms.ListViewGroup listViewGroup1 = new System.Windows.Forms.ListViewGroup("", System.Windows.Forms.HorizontalAlignment.Left);
-					System.Windows.Forms.ListViewGroup listViewGroup2 = new System.Windows.Forms.ListViewGroup("", System.Windows.Forms.HorizontalAlignment.Left);
+					System.Windows.Forms.ListViewGroup listViewGroup5 = new System.Windows.Forms.ListViewGroup("", System.Windows.Forms.HorizontalAlignment.Left);
+					System.Windows.Forms.ListViewGroup listViewGroup6 = new System.Windows.Forms.ListViewGroup("", System.Windows.Forms.HorizontalAlignment.Left);
 					this.statusStrip1 = new System.Windows.Forms.StatusStrip();
 					this.statusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
 					this.fileSystemWatcher1 = new System.IO.FileSystemWatcher();
@@ -87,13 +87,13 @@ namespace FileDock
             this.columnHeader1});
 					this.listFiles.Font = new System.Drawing.Font("Courier New", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 					this.listFiles.FullRowSelect = true;
-					listViewGroup1.Header = "";
-					listViewGroup1.Name = "listViewGroup1";
-					listViewGroup2.Header = "";
-					listViewGroup2.Name = "listViewGroup2";
+					listViewGroup5.Header = "";
+					listViewGroup5.Name = "listViewGroup1";
+					listViewGroup6.Header = "";
+					listViewGroup6.Name = "listViewGroup2";
 					this.listFiles.Groups.AddRange(new System.Windows.Forms.ListViewGroup[] {
-            listViewGroup1,
-            listViewGroup2});
+            listViewGroup5,
+            listViewGroup6});
 					this.listFiles.Location = new System.Drawing.Point(2, 106);
 					this.listFiles.Name = "listFiles";
 					this.listFiles.Size = new System.Drawing.Size(185, 382);
@@ -140,6 +140,7 @@ namespace FileDock
 					this.flowLayoutPanel1.Name = "flowLayoutPanel1";
 					this.flowLayoutPanel1.Size = new System.Drawing.Size(160, 70);
 					this.flowLayoutPanel1.TabIndex = 11;
+					this.flowLayoutPanel1.Enter += new System.EventHandler(this.NoFocusAllowed);
 					// 
 					// button10
 					// 
@@ -153,7 +154,9 @@ namespace FileDock
 					this.button10.Name = "button10";
 					this.button10.Size = new System.Drawing.Size(20, 20);
 					this.button10.TabIndex = 16;
+					this.button10.TabStop = false;
 					this.button10.UseVisualStyleBackColor = true;
+					this.button10.Enter += new System.EventHandler(this.NoFocusAllowed);
 					// 
 					// button9
 					// 
@@ -166,7 +169,9 @@ namespace FileDock
 					this.button9.Name = "button9";
 					this.button9.Size = new System.Drawing.Size(20, 20);
 					this.button9.TabIndex = 15;
+					this.button9.TabStop = false;
 					this.button9.UseVisualStyleBackColor = true;
+					this.button9.Enter += new System.EventHandler(this.NoFocusAllowed);
 					this.button9.Click += new System.EventHandler(this.createDir_Click);
 					// 
 					// button8
@@ -181,7 +186,9 @@ namespace FileDock
 					this.button8.Name = "button8";
 					this.button8.Size = new System.Drawing.Size(20, 20);
 					this.button8.TabIndex = 14;
+					this.button8.TabStop = false;
 					this.button8.UseVisualStyleBackColor = true;
+					this.button8.Enter += new System.EventHandler(this.NoFocusAllowed);
 					this.button8.Click += new System.EventHandler(this.clone_Click);
 					// 
 					// button7
@@ -196,7 +203,9 @@ namespace FileDock
 					this.button7.Name = "button7";
 					this.button7.Size = new System.Drawing.Size(20, 20);
 					this.button7.TabIndex = 13;
+					this.button7.TabStop = false;
 					this.button7.UseVisualStyleBackColor = true;
+					this.button7.Enter += new System.EventHandler(this.NoFocusAllowed);
 					this.button7.Click += new System.EventHandler(this.config_Click);
 					// 
 					// button6
@@ -211,7 +220,9 @@ namespace FileDock
 					this.button6.Name = "button6";
 					this.button6.Size = new System.Drawing.Size(20, 20);
 					this.button6.TabIndex = 10;
+					this.button6.TabStop = false;
 					this.button6.UseVisualStyleBackColor = true;
+					this.button6.Enter += new System.EventHandler(this.NoFocusAllowed);
 					this.button6.Click += new System.EventHandler(this.delete_Click);
 					this.button6.DragDrop += new System.Windows.Forms.DragEventHandler(this.delete_DragDrop);
 					this.button6.DragEnter += new System.Windows.Forms.DragEventHandler(this.delete_DragEnter);
@@ -228,7 +239,9 @@ namespace FileDock
 					this.button5.Name = "button5";
 					this.button5.Size = new System.Drawing.Size(20, 20);
 					this.button5.TabIndex = 9;
+					this.button5.TabStop = false;
 					this.button5.UseVisualStyleBackColor = true;
+					this.button5.Enter += new System.EventHandler(this.NoFocusAllowed);
 					this.button5.Click += new System.EventHandler(this.sevenZip_Click);
 					this.button5.DragDrop += new System.Windows.Forms.DragEventHandler(this.sevenZip_DragDrop);
 					this.button5.DragEnter += new System.Windows.Forms.DragEventHandler(this.sevenZip_DragEnter);
@@ -243,7 +256,9 @@ namespace FileDock
 					this.button3.Name = "button3";
 					this.button3.Size = new System.Drawing.Size(20, 20);
 					this.button3.TabIndex = 4;
+					this.button3.TabStop = false;
 					this.button3.UseVisualStyleBackColor = true;
+					this.button3.Enter += new System.EventHandler(this.NoFocusAllowed);
 					this.button3.Click += new System.EventHandler(this.search_Click);
 					// 
 					// button2
@@ -257,7 +272,9 @@ namespace FileDock
 					this.button2.Name = "button2";
 					this.button2.Size = new System.Drawing.Size(20, 20);
 					this.button2.TabIndex = 5;
+					this.button2.TabStop = false;
 					this.button2.UseVisualStyleBackColor = true;
+					this.button2.Enter += new System.EventHandler(this.NoFocusAllowed);
 					this.button2.Click += new System.EventHandler(this.refresh_Click);
 					// 
 					// button4
@@ -272,8 +289,10 @@ namespace FileDock
 					this.button4.Name = "button4";
 					this.button4.Size = new System.Drawing.Size(20, 19);
 					this.button4.TabIndex = 6;
+					this.button4.TabStop = false;
 					this.button4.TextAlign = System.Drawing.ContentAlignment.TopLeft;
 					this.button4.UseVisualStyleBackColor = true;
+					this.button4.Enter += new System.EventHandler(this.NoFocusAllowed);
 					this.button4.Click += new System.EventHandler(this.close_Click);
 					// 
 					// button1
@@ -287,7 +306,9 @@ namespace FileDock
 					this.button1.Name = "button1";
 					this.button1.Size = new System.Drawing.Size(20, 20);
 					this.button1.TabIndex = 17;
+					this.button1.TabStop = false;
 					this.button1.UseVisualStyleBackColor = true;
+					this.button1.Enter += new System.EventHandler(this.NoFocusAllowed);
 					this.button1.Click += new System.EventHandler(this.createFile_Click);
 					// 
 					// FileDockForm
@@ -313,6 +334,8 @@ namespace FileDock
 					this.ShowInTaskbar = false;
 					this.Text = "FileDock";
 					this.TransparencyKey = System.Drawing.Color.Blue;
+					this.Enter += new System.EventHandler(this.NoFocusAllowed);
+					this.Activated += new System.EventHandler(this.NoFocusAllowed);
 					this.statusStrip1.ResumeLayout(false);
 					this.statusStrip1.PerformLayout();
 					((System.ComponentModel.ISupportInitialize)(this.fileSystemWatcher1)).EndInit();

@@ -11,6 +11,9 @@ using System.Text.RegularExpressions;
 using System.Diagnostics;
 using Microsoft.Win32;
 using System.Runtime.Remoting.Messaging;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.IO.Compression;
 
 namespace FileDock {
 	public partial class FileDockForm : AppBar {
@@ -79,8 +82,15 @@ namespace FileDock {
 		public Dictionary<string, string> savedPaths; // maps drives to the last path we visited on that drive
 
 		public FileDockForm() {
-			InitializeComponent();
 			savedPaths = new Dictionary<string, string>();
+			InitializeComponent();
+			leftChild = null;
+		}
+
+		public FileDockForm(FileDockForm left) {
+			savedPaths = new Dictionary<string, string>();
+			InitializeComponent();
+			leftChild = left;
 		}
 		
 		// re-read all the system drives and re-draw the DriveButtons
@@ -114,7 +124,9 @@ namespace FileDock {
 						this.currentDirectory = (savedPaths.ContainsKey(newDrive) ? savedPaths[newDrive] : "");
 						refreshFiles();
 					}
+					this.listFiles.Focus();
 				};
+				
 
 				flowLayoutPanel1.Controls.Add(b);
 				driveCount++;
@@ -198,22 +210,25 @@ namespace FileDock {
 		ConfigForm configForm;
 		Config config;
 		FileDockForm rightChild;
+		FileDockForm leftChild;
 
 		CreateDirPanel createDirPanel;
 		CreateFilePanel createFilePanel;
-
+		
 		protected override void OnLoad(EventArgs e) {
 			base.OnLoad(e);
 			this.DragDrop += new DragEventHandler(FileDockForm_DragDrop);
 			this.DragOver += new DragEventHandler(FileDockForm_DragOver);
 			this.KeyUp += new KeyEventHandler(FileDockForm_KeyUp);
-			this.KeyPress += new KeyPressEventHandler(FileDockForm_KeyPress);
+			this.Enter += new EventHandler(NoFocusAllowed);
 			listFiles.ItemDrag += new ItemDragEventHandler(listFiles_ItemDrag);
 			listFiles.MouseMove += new MouseEventHandler(listFiles_MouseMove);
 			listFiles.MouseClick += new MouseEventHandler(listFiles_MouseClick);
 			listFiles.DoubleClick += new EventHandler(listFiles_DoubleClick);
 			listFiles.DragOver += new DragEventHandler(FileDockForm_DragOver);
 			listFiles.DragDrop += new DragEventHandler(FileDockForm_DragDrop);
+			listFiles.KeyUp += new KeyEventHandler(FileDockForm_KeyUp);
+			
 
 			this.RegisterAppBar();
 			this.IdealSize = new Size(200, SystemInformation.PrimaryMonitorSize.Height);
@@ -221,32 +236,52 @@ namespace FileDock {
 			
 			// set double-buffering options
 			this.SetExStyles();
-
 			
 			this.searchPanel = new SearchPanel(this);
-			this.searchPanel.Location = flowLayoutPanel1.PointToScreen(new Point(flowLayoutPanel1.Left, listFiles.Top));
+			this.searchPanel.Location = new Point(flowLayoutPanel1.Left, listFiles.Top);
 			this.searchPanel.Hide();
+			this.searchPanel.AfterToggle += delegate {
+				if ( this.searchPanel.Visible )
+					this.searchPanel.txtFilename.Focus();
+			};
 			this.Controls.Add(this.searchPanel);
 
 			this.createDirPanel = new CreateDirPanel(this);
-			this.createDirPanel.Location = flowLayoutPanel1.PointToScreen(new Point(flowLayoutPanel1.Left, listFiles.Top));
+			this.createDirPanel.Location = new Point(flowLayoutPanel1.Left, listFiles.Top);
 			this.createDirPanel.Hide();
 			this.Controls.Add(this.createDirPanel);
 
 			this.createFilePanel = new CreateFilePanel(this);
-			this.createFilePanel.Location = flowLayoutPanel1.PointToScreen(new Point(flowLayoutPanel1.Left, listFiles.Top));
+			this.createFilePanel.Location = new Point(flowLayoutPanel1.Left, listFiles.Top);
 			this.createFilePanel.Hide();
 			this.Controls.Add(this.createFilePanel);
 
+			this.InstanceIndex = this.getInstanceIndex();
+
 			this.configForm = new ConfigForm();
-			this.config = new Config(this.configForm, "FileDock");
+			this.config = new Config(this.configForm, "FileDock\\Instance"+this.InstanceIndex);
 
 			// set some default config values
 			this.config["SingleClick"] = "True";
 			this.config["CurrentDirectory"] = "";
 			this.config["CurrentDrive"] = "C";
+			this.config["SavedPathsMap"] = "";
+
 			// load any saved values from the registry, overwriting the defaults
 			this.config.LoadFromRegistry();
+
+			// now try to de-serialize the savedPaths mapping
+			try {
+				MemoryStream mem = new MemoryStream();
+				byte[] raw = UintDecodeBytes(this.config["SavedPathsMap"]);
+				mem.Write(raw, 0, raw.Length);
+				mem.Seek(0, SeekOrigin.Begin);
+				savedPaths = (Dictionary<string, string>)(new BinaryFormatter()).Deserialize(mem);
+			} catch ( SerializationException ) {
+			} catch ( Exception ex ) {
+				MessageBox.Show(ex.ToString());
+			}
+			
 			// then last, and highest priority, would be a path passed on the command line
 			bool skipone = true;
 			foreach ( string arg in Environment.GetCommandLineArgs() ) {
@@ -274,25 +309,65 @@ namespace FileDock {
 			
 			refreshDrives();
 			refreshFiles();
+			this.listFiles.Focus();
 		}
-
-		void FileDockForm_KeyPress(object sender, KeyPressEventArgs e) {
-			Debug.Print("keyPress: " + e.KeyChar);
-		}
-
-		void FileDockForm_KeyUp(object sender, KeyEventArgs e) {
-			Debug.Print("keyUp: " + e.KeyCode.ToString());
-		}
-
+		
 		protected override void OnClosing(CancelEventArgs e) {
 			if (this.rightChild != null && !this.rightChild.IsDisposed) {
 				this.rightChild.Close();
 			}
+			MemoryStream mem = new MemoryStream();
+			(new BinaryFormatter()).Serialize(mem,savedPaths);
+			byte[] B = mem.ToArray();
+			string s = UintEncodeBytes(B);
+			mem.Close();
+			this.config["SavedPathsMap"] = s.ToString();
 			this.config.SaveToRegistry();
 			this.UnregisterAppBar();
 			base.OnClosing(e);
 		}
 		
+		#region UintEncode/DecodeBytes
+		private string UintEncodeBytes(byte[] B) {
+			string s = "";
+			foreach ( byte b in B ) {
+				string c = "" + (uint)b;
+				while ( c.Length < 3 ) {
+					c = "0" + c;
+				}
+				s += c;
+			}
+			return s;
+		}
+		private byte[] UintDecodeBytes(string s) {
+			byte[] b = new byte[(int)(s.Length / 3)];
+			uint b_ptr = 0;
+			StringReader r = new StringReader(s);
+			char[] buffer = new char[3];
+			while ( r.Read(buffer, 0, 3) == 3 ) {
+				string c = "" + buffer[0] + "" + buffer[1] + "" + buffer[2];
+				uint d = uint.Parse(c);
+				b[b_ptr] = (byte)d;
+				b_ptr++;
+			}
+			return b;
+		}
+		#endregion
+
+
+		void FileDockForm_KeyUp(object sender, KeyEventArgs e) {
+			Debug.Print("keyUp: " + e.KeyCode.ToString());
+			switch ( e.KeyCode ) {
+				case Keys.OemQuestion:
+					searchPanel.Toggle();
+					break;
+				case Keys.F5:
+					refresh_Click(null, null);
+					break;
+			}
+
+		}
+
 		private void listFiles_DoubleClick(object sender, EventArgs e) {
 			if ( (FileDockForm.ModifierKeys & Keys.Control) == 0
 					&& (FileDockForm.ModifierKeys & Keys.Shift) == 0
@@ -641,26 +716,16 @@ namespace FileDock {
 		
 		// the clone button
 		protected void clone_Click(object sender, EventArgs e) {
+			// if we already have a right child
 			if (this.rightChild != null && !this.rightChild.IsDisposed) {
+				// then just pass this request on to them
 				this.rightChild.clone_Click(null, null);
 			} else {
-				this.rightChild = new FileDockForm();
-				if (this.IsMasterDock) {
-					this.rightChild.masterFileDock = this;
-				} else {
-					this.rightChild.masterFileDock = this.masterFileDock;
-				}
+				this.rightChild = new FileDockForm(this);
 				this.rightChild.Show();
 			}
 		}
-		public FileDockForm masterFileDock; // null if this instance is the head of the linked list of docks
-		// otherwise, a reference to the first form in the list
-		public bool IsMasterDock {
-			get {
-				return (masterFileDock == null);
-			}
-		}
-
+		
 		// the zip button (and its droppable effects)
 		private void sevenZip_Click(object sender, EventArgs e) {
 			execCmd(@"C:\Program Files\7-Zip\7zFM.exe", "\"" + this.currentPath + "\"", null, false);
@@ -777,6 +842,35 @@ namespace FileDock {
 			set { statusLabel1.Text = value; }
 		}
 
+		public void refreshAllInstances() {
+			refresh_Click(null, null);
+			FileDockForm cursor = this.leftChild;
+			// walk left refreshing
+			while ( cursor != null && !cursor.IsDisposed ) {
+				cursor.refresh_Click(null, null);
+				cursor = cursor.leftChild;
+			}
+			// then walk right
+			cursor = this.rightChild;
+			while ( cursor != null && !cursor.IsDisposed ) {
+				cursor.refresh_Click(null, null);
+				cursor = cursor.rightChild;
+			}
+		}
+
+		public int InstanceIndex;
+		// returns what position we are at in the leftChild/rightChild linked list
+		private int getInstanceIndex() {
+			if ( leftChild == null ) {
+				return 0;
+			} else {
+				return this.leftChild.getInstanceIndex() + 1;
+			}
+		}
+
+		private void NoFocusAllowed(object sender, EventArgs e) {
+			this.listFiles.Focus();
+		}
 
 	}
 
@@ -804,12 +898,7 @@ namespace FileDock {
 				form.StatusText = "Moved";
 			}
 			this.form.Cursor = Cursors.Default;
-			// refresh all open panels
-			if (this.form.IsMasterDock) {
-				this.form.refreshFiles(true);
-			} else {
-				this.form.masterFileDock.refreshFiles(true);
-			}
+			form.refreshAllInstances();
 		}
 	}
 

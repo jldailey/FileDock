@@ -7,7 +7,7 @@ using System.Text;
 using System.Windows.Forms;
 
 namespace FileDock {
-	public abstract class TogglePanel: UserControl {
+	public class TogglePanel: UserControl {
 		public FileDockForm Owner;
 		public TogglePanel(FileDockForm Owner) {
 			this.Owner = Owner;

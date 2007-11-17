@@ -27,7 +27,7 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_9D4A4ADA3067077927B2603F919360FE"
+        "MsmKey" = "8:_AE5D72D3FC3CE396FEEA7FEA7980680D"
         "OwnerKey" = "8:_45C6486FD8234AB9A7663CC7767D21D8"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -46,7 +46,7 @@
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_9D4A4ADA3067077927B2603F919360FE"
+        "OwnerKey" = "8:_AE5D72D3FC3CE396FEEA7FEA7980680D"
         "MsmSig" = "8:_UNDEFINED"
         }
     }
@@ -174,14 +174,14 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
-            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_9D4A4ADA3067077927B2603F919360FE"
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_AE5D72D3FC3CE396FEEA7FEA7980680D"
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
             "AssemblyAsmDisplayName" = "8:AppBars, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL"
                 "ScatterAssemblies"
                 {
-                    "_9D4A4ADA3067077927B2603F919360FE"
+                    "_AE5D72D3FC3CE396FEEA7FEA7980680D"
                     {
                     "Name" = "8:AppBars.dll"
                     "Attributes" = "3:512"
@@ -280,14 +280,14 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:FileDock"
-        "ProductCode" = "8:{DABB01B3-B1EF-4613-B89F-DF19E076D17B}"
-        "PackageCode" = "8:{51C4F6F1-E473-4270-ADB3-4DD3CF2AA30A}"
+        "ProductCode" = "8:{E2A2BF08-50D6-40D3-87C0-6773E9B084E4}"
+        "PackageCode" = "8:{0FB8A634-AF47-4BCE-B854-028F07CB0225}"
         "UpgradeCode" = "8:{FA5CD851-72DD-42AF-84B0-A642DD10538D}"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:FALSE"
-        "ProductVersion" = "8:1.4.0"
+        "ProductVersion" = "8:1.4.1"
         "Manufacturer" = "8:Jesse Dailey"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:"

@@ -19,7 +19,7 @@ namespace FileDock {
 			set {
 				_Selected = value;
 				if (value) {
-					this.BorderStyle = BorderStyle.Fixed3D;
+					this.BorderStyle = BorderStyle.FixedSingle;
 				} else {
 					this.BorderStyle = BorderStyle.None;
 				}
@@ -52,7 +52,11 @@ namespace FileDock {
 			mTip = new ToolTip();
 			EventHandler showTip = delegate(object sender, EventArgs e)
 			{
-				mTip.Show("Drive: " + label + " Free Space: "+drive.AvailableFreeSpace.ToString(), this, 2000);
+				if ( drive.DriveType == DriveType.Fixed ) {
+					mTip.Show("Drive: " + label + " Free Space: " + drive.AvailableFreeSpace.ToString(), this, 1500);
+				} else {
+					mTip.Show("Drive: " + label, this, 1500);
+				}
 			};
 			this.MouseHover += showTip;
 			this.driveLabel.MouseHover += showTip;

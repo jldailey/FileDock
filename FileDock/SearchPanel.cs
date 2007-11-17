@@ -14,6 +14,10 @@ namespace FileDock {
 		public SearchPanel(FileDockForm owner):base(owner) {
 			InitializeComponent();
 		}
+		protected override void OnLoad(EventArgs e) {
+			base.OnLoad(e);
+			this.txtContains.KeyUp += new KeyEventHandler(txtFilename_KeyUp);
+		}
 		
 		private void btnSearch_Click(object sender, EventArgs e) {
 			btnSearch.Enabled = false;
@@ -103,6 +107,9 @@ namespace FileDock {
 				e.Handled = true;
 				e.SuppressKeyPress = true;
 				btnSearch_Click(null, null);
+			} else if ( e.KeyCode == Keys.Escape ) {
+				this.Toggle();
+				Owner.refreshFiles();
 			}
 		}
 
