@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace FileDock
 {
@@ -167,7 +168,7 @@ namespace FileDock
 		/// <summary>
 		/// Updates the AppBar's position
 		/// </summary>
-		private void UpdateDockedAppBarPosition(AppBarDockStyle dockStyle) 
+		internal void UpdateDockedAppBarPosition(AppBarDockStyle dockStyle) 
 		{
 			int edge = 0;
 			switch (dockStyle) 
@@ -193,18 +194,44 @@ namespace FileDock
 				switch ((int)m.WParam) 
 				{
 					case NativeMethods.ABN_FULLSCREENAPP:
-						//Debug.Print("FullScreen App: "+m.ToString());
+						//Debug.Print("ABN_FULLSCREENAPP: "+m.ToString());
+						//TopMost = false;						
 						break;
 					case NativeMethods.ABN_POSCHANGED:
-						//Debug.Print("POS changed: " + m.ToString());
+						Debug.Print("ABN_POSCHANGED: " + m.ToString());
+						if ( Visible )
+							Hide();
+						else
+							Show();
+						UpdateDockedAppBarPosition(this.AppBarDock);
 						break;
 					case NativeMethods.ABN_STATECHANGE: /*TODO: respond to StateChanged message */;
-						//Debug.Print("State changed: " + m.ToString());
+						Debug.Print("ABN_STATECHANGE: " + m.ToString());
 						break;
 					case NativeMethods.ABN_WINDOWARRANGE:
-						//Debug.Print("Window arrange: " + m.ToString());
+						Debug.Print("ABN_WINDOWARRANGE: " + m.ToString());
+						break;
+					default:
+						Debug.Print("UNKNOWN: "+m.ToString());
 						break;
 				}
+			}
+			//if ( m.Msg != 0x4e ) Debug.Print("TO ME: " + m.ToString());
+			if ( m.Msg == (int)NativeMethods.WindowsMessages.WM_ACTIVATE ) {
+				//NativeMethods.ActivateAppBar(this.Handle);
+			} else if ( m.Msg == (int)NativeMethods.WindowsMessages.WM_NCCALCSIZE ) {
+				//Debug.Print(m.ToString());
+			} else if ( m.Msg == (int)NativeMethods.WindowsMessages.WM_WINDOWPOSCHANGED ) {
+				//|| m.Msg == (int)NativeMethods.WindowsMessages.WM_WINDOWPOSCHANGING ) {
+				NativeMethods.WINDOWPOS pos = (NativeMethods.WINDOWPOS)Marshal.PtrToStructure(m.LParam,typeof(NativeMethods.WINDOWPOS));
+				Debug.Print(m.ToString());
+				Debug.Print(pos.ToString());
+				//NativeMethods.WindowPosChanged(this.Handle);
+			} else if ( m.Msg == (int)NativeMethods.WindowsMessages.WM_WINDOWPOSCHANGING ) {
+				NativeMethods.WINDOWPOS pos = (NativeMethods.WINDOWPOS)Marshal.PtrToStructure(m.LParam, typeof(NativeMethods.WINDOWPOS));
+				Debug.Print(m.ToString());
+				Debug.Print(pos.ToString());
+				//NativeMethods.WindowPosChanged(this.Handle);
 			}
 			base.WndProc(ref m);
 		}
