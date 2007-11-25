@@ -6,7 +6,7 @@ using Microsoft.Win32;
 
 
 namespace FileDock {
-	class Config {
+	public class Config {
 		private Dictionary<string, Control> mapControls;
 		private Dictionary<string, string> mapStrings;
 		private Form srcForm;

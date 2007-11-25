@@ -25,7 +25,7 @@ namespace FileDock {
 			Owner.Cursor = Cursors.WaitCursor;
 			Owner.listFiles.Items.Clear();
 			ListViewItem item = Owner.listFiles.Items.Add("Clear Search Results");
-			item.Tag = "refresh";
+			item.Tag = ".";
 			item.Group = Owner.listFiles.Groups[0];
 			searchHelper(new DirectoryInfo(Owner.currentPath), txtFilename.Text, txtContains.Text);
 			btnSearch.Enabled = true;

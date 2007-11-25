@@ -78,6 +78,11 @@ namespace FileDock {
 		}
 		public string currentPath {
 			get { return currentDrive + @":\" + currentDirectory; }
+			set {
+				currentDrive = Regex.Replace(value, @"^(\w+):.*$", @"$1");
+				currentDirectory = Regex.Replace(value, @"^\w+:\\(.*)$", @"$1");
+				refreshFiles();
+			}
 		}
 		public Dictionary<string, string> savedPaths; // maps drives to the last path we visited on that drive
 
@@ -157,7 +162,9 @@ namespace FileDock {
 				// build a new tree asynchronously, so that form can still draw itself while this is updating
 				RefreshDelegate d = new RefreshDelegate(delegate()
 				{
-					listFiles.Columns[0].Text = this.currentPath;
+					int maxLen = 30;
+					listFiles.Columns[0].Text = AbbreviatePath(this.currentPath, maxLen);
+					
 					ListViewItem tmp = listFiles.Items.Add("..");
 					tmp.Tag = "..";
 					tmp.Group = listFiles.Groups[0];
@@ -174,14 +181,13 @@ namespace FileDock {
 						string[] files = Directory.GetFiles(currentPath,"*.*");
 						Array.Sort<string>(files);
 						foreach (string file in files) {
-							ListViewItem node = listFiles.Items.Add(Path.GetFileName(file));
 							if ( this.config["ShowHidden"] == "False" ) {
 								FileInfo inf = new FileInfo(file);
 								if ( (inf.Attributes & FileAttributes.Hidden) == FileAttributes.Hidden ) {
 									continue;
 								}
 							}
-						
+							ListViewItem node = listFiles.Items.Add(Path.GetFileName(file));
 							node.ToolTipText = Path.GetFileName(file);
 							node.Tag = Path.GetFullPath(file);
 							node.ImageIndex = 1;
@@ -207,14 +213,17 @@ namespace FileDock {
 		}
 
 		SearchPanel searchPanel;
+		FavoritesPanel favPanel;
 		ConfigForm configForm;
-		Config config;
+		public Config config;
 		FileDockForm rightChild;
 		FileDockForm leftChild;
-
+		
 		CreateDirPanel createDirPanel;
 		CreateFilePanel createFilePanel;
-		
+
+		public bool dockOnLoad = true;
+
 		protected override void OnLoad(EventArgs e) {
 			base.OnLoad(e);
 			this.DragDrop += new DragEventHandler(FileDockForm_DragDrop);
@@ -228,11 +237,16 @@ namespace FileDock {
 			listFiles.DragOver += new DragEventHandler(FileDockForm_DragOver);
 			listFiles.DragDrop += new DragEventHandler(FileDockForm_DragDrop);
 			listFiles.KeyUp += new KeyEventHandler(FileDockForm_KeyUp);
-			
 
-			this.RegisterAppBar();
-			this.IdealSize = new Size(200, SystemInformation.PrimaryMonitorSize.Height);
-			this.AppBarDock = AppBarDockStyle.ScreenLeft;
+			if ( dockOnLoad ) {
+				this.RegisterAppBar();
+				this.IdealSize = new Size(240, SystemInformation.PrimaryMonitorSize.Height);
+				this.AppBarDock = AppBarDockStyle.ScreenLeft;
+			} else if ( this.leftChild != null ) {
+				this.Size = new Size(this.leftChild.Width, this.leftChild.Height);
+				this.Left = this.leftChild.Right;
+				this.TopMost = true;
+			}
 			
 			// set double-buffering options
 			this.SetExStyles();
@@ -245,6 +259,30 @@ namespace FileDock {
 					this.searchPanel.txtFilename.Focus();
 			};
 			this.Controls.Add(this.searchPanel);
+
+			this.favPanel = new FavoritesPanel(this);
+			this.favPanel.Location = new Point(flowLayoutPanel1.Left, listFiles.Top);
+			this.favPanel.Width = this.Width - 8;
+			this.favPanel.Hide();
+			this.favPanel.FavoriteSelected += delegate(string path) {
+				this.currentPath = path;
+			};
+			this.favPanel.AfterToggle += delegate {
+				if ( this.favPanel.Visible ) {
+					this.favPanel.listFavs.Items.Clear();
+					this.favPanel.listFavs.Items.AddRange(favoriteFolders.ToArray());
+				} else {
+					this.favPanel.listFavs.Items.Clear();
+				}
+			};
+			this.favPanel.listFavs.DrawMode = DrawMode.OwnerDrawVariable;
+			this.favPanel.listFavs.DrawItem += new DrawItemEventHandler(delegate (object sender, DrawItemEventArgs ev) {
+				string text = AbbreviatePath(this.favPanel.listFavs.Items[ev.Index].ToString(), this.listFiles.Font, ev.Bounds.Width);
+				ev.Graphics.DrawString(text,this.listFiles.Font, Brushes.Black, ev.Bounds.X+1, ev.Bounds.Y+3);
+			});
+			this.favPanel.listFavs.MeasureItem += new MeasureItemEventHandler(delegate(object sender, MeasureItemEventArgs ev) {	});
+			
+			this.Controls.Add(this.favPanel);
 
 			this.createDirPanel = new CreateDirPanel(this);
 			this.createDirPanel.Location = new Point(flowLayoutPanel1.Left, listFiles.Top);
@@ -266,6 +304,7 @@ namespace FileDock {
 			this.config["CurrentDirectory"] = "";
 			this.config["CurrentDrive"] = "C";
 			this.config["SavedPathsMap"] = "";
+			this.config["Favorites"] = "";
 
 			// load any saved values from the registry, overwriting the defaults
 			this.config.LoadFromRegistry();
@@ -281,7 +320,16 @@ namespace FileDock {
 			} catch ( Exception ex ) {
 				MessageBox.Show(ex.ToString());
 			}
-			
+
+			// then de-serialize the list of favorites
+			if ( this.leftChild != null ) {
+				this.favoriteFolders = this.leftChild.favoriteFolders;
+			} else {
+				this.favoriteFolders = new List<string>();
+				this.favoriteFolders.AddRange(this.config["Favorites"].Split(';'));
+				this.favoriteFolders.Remove("");
+			}
+
 			// then last, and highest priority, would be a path passed on the command line
 			bool skipone = true;
 			foreach ( string arg in Environment.GetCommandLineArgs() ) {
@@ -305,11 +353,14 @@ namespace FileDock {
 				}
 			}
 
+
 			this.hoveredItem = null;
 			
 			refreshDrives();
 			refreshFiles();
 			this.listFiles.Focus();
+
+
 		}
 		
 		protected override void OnClosing(CancelEventArgs e) {
@@ -322,11 +373,18 @@ namespace FileDock {
 			string s = UintEncodeBytes(B);
 			mem.Close();
 			this.config["SavedPathsMap"] = s.ToString();
+			this.config["Favorites"] = String.Join(";", favoriteFolders.ToArray());
 			this.config.SaveToRegistry();
-			this.UnregisterAppBar();
+			if ( this.IsAppBarRegistered() ) {
+				this.UnregisterAppBar();
+			}
 			base.OnClosing(e);
 		}
 		
+
+
+
+
 		#region UintEncode/DecodeBytes
 		private string UintEncodeBytes(byte[] B) {
 			string s = "";
@@ -354,6 +412,23 @@ namespace FileDock {
 		}
 		#endregion
 
+		#region Path rolling
+		// this would only be used by Instance 0, the far left bar, to track left-side overflow
+		private Stack<string> pathStack = null;
+		public void pushPathLeft(string path) {
+			if ( this.leftChild != null ) {
+				// push our current path left
+				this.leftChild.pushPathLeft(this.currentPath);
+			} else {
+				// or push it up on the stack of paths that have overflowed left
+				if ( pathStack == null ) {
+					pathStack = new Stack<string>();
+				}
+				pathStack.Push(this.currentPath);
+			}
+			this.currentPath = path;
+		}
+		#endregion
 
 		void FileDockForm_KeyUp(object sender, KeyEventArgs e) {
 			Debug.Print("keyUp: " + e.KeyCode.ToString());
@@ -402,7 +477,7 @@ namespace FileDock {
 		private void listFiles_MouseMove(object sender, MouseEventArgs e) {
 			// select a whole row all at once here, so ignore the x 
 			//Debug.Print("X: " + e.X + " Y: " + e.Y);
-			ListViewItem newHoveredItem = listFiles.GetItemAt(1, e.Y);
+			ListViewItem newHoveredItem = listFiles.GetItemAt(e.X, e.Y);
 			if (newHoveredItem != null) {
 				if (prevHoveredItem != null && prevHoveredItem == newHoveredItem) {
 					return;
@@ -446,7 +521,7 @@ namespace FileDock {
 				}
 				DataObject data = new DataObject(DataFormats.FileDrop, s);
 				// begin the drag
-				listFiles.DoDragDrop(data, DragDropEffects.Copy | DragDropEffects.Move | DragDropEffects.All);
+				listFiles.DoDragDrop(data, DragDropEffects.Copy | DragDropEffects.Move | DragDropEffects.Link | DragDropEffects.All | DragDropEffects.None );
 			}
 		}
 		
@@ -590,7 +665,14 @@ namespace FileDock {
 					File.Copy(Element, Dst + Path.GetFileName(Element), true);
 			}
 		}
-		
+
+		public void closeAllRightChildren() {
+			if ( this.rightChild != null ) {
+				this.rightChild.closeAllRightChildren();
+				this.rightChild.Close();
+			}
+		}
+
 		// when the user has indicated they want to launch this file or open this directory
 		private void activateFileFolder(ListViewItem node) {
 			string save_dir = currentDirectory;
@@ -598,18 +680,29 @@ namespace FileDock {
 				string new_dir = (String)node.Tag;
 				if (new_dir == ".") {	// do nothing
 					return;
-				} else if (new_dir == "refresh") {
-					// dont change any dirs, just refresh the current one
-					refreshFiles();
-					return;
 				} else if (new_dir == "..") {
 					if (this.currentDirectory.Contains("\\")) {
+						//remove the last path element from the current directory
 						new_dir = Regex.Replace(this.currentDirectory, "\\\\[^\\\\]+$", "");
 					} else {
 						new_dir = "";
 					}
 				}
-				this.currentDirectory = new_dir;
+
+				// do the actual state change
+				if ( false ) { // if we want to load folders mac-style, scrolling them out to the right
+					// if we already have a right child
+					if ( this.rightChild != null && !this.rightChild.IsDisposed ) {
+						this.rightChild.currentPath = new_dir;
+						this.rightChild.closeAllRightChildren();
+					} else {
+						this.rightChild = new FileDockForm(this);
+						this.rightChild.Show();
+						this.rightChild.currentPath = new_dir;
+					}
+				} else {
+					this.currentDirectory = new_dir;
+				}
 			} catch (Exception err) {
 				MessageBox.Show("Error: " + err.ToString() + " this.currentDirectory: " + this.currentDirectory);
 				this.currentDirectory = "";
@@ -620,7 +713,7 @@ namespace FileDock {
 			if (!Directory.Exists(currentPath)) {
 				Debug.Print("Executing");
 				startFileWithDefaultHandler(currentPath);
-				// cover the loading time with a little animation
+				// cover the loading time with a little bounce animation of the clicked item
 				Form floater = new Form();
 				floater.FormBorderStyle = FormBorderStyle.None;
 				floater.Size = new Size(200, (int)(floater.Font.SizeInPoints) + 4);
@@ -649,6 +742,7 @@ namespace FileDock {
 					} else {
 						floater.Font = new Font(floater.Font.FontFamily, floater.Font.SizeInPoints + .3f);
 					}
+					floater.Left += 1;
 					floater.Update();
 					System.Threading.Thread.Sleep(30);
 				}
@@ -693,6 +787,49 @@ namespace FileDock {
 			searchPanel.Toggle();
 		}
 
+		private void favorites_Click(object sender, EventArgs e) {
+			this.favPanel.Toggle();
+		}
+
+		private void favorites_DragEnter(object sender, DragEventArgs e) {
+			bool isFileDrop = e.Data.GetDataPresent(DataFormats.FileDrop);
+			bool isStringDrop = e.Data.GetDataPresent(DataFormats.Text);
+			if ( isFileDrop || isStringDrop ) {
+				e.Effect = DragDropEffects.All;
+			} else {
+				e.Effect = DragDropEffects.None;
+			}
+		}
+
+		private void favorites_DragDrop(object sender, DragEventArgs e) {
+			if ( e.Effect == DragDropEffects.All ) {
+				bool isStringDrop = e.Data.GetDataPresent(DataFormats.Text);
+				bool isFileDrop = e.Data.GetDataPresent(DataFormats.FileDrop);
+				string srcFile = null;
+				if ( isFileDrop ) {
+					srcFile = ((string[])(e.Data.GetData(DataFormats.FileDrop)))[0];
+				} else if ( isStringDrop ) {
+					srcFile = (string)e.Data.GetData(DataFormats.Text);
+				}
+				addFolderToFavorites(srcFile);
+			}
+		}
+
+		protected List<string> favoriteFolders;
+		public void addFolderToFavorites(string srcFile) {
+			if ( !Directory.Exists(srcFile) ) {
+				Debug.Print("Directory not found, trying to trim: " + srcFile);
+				srcFile = Regex.Replace(srcFile, "\\\\[^\\\\]+$", "");
+			}
+			if ( !Directory.Exists(srcFile) ) {
+				MessageBox.Show("No such directory: " + srcFile);
+				return;
+			}
+			if ( !favoriteFolders.Contains(srcFile) ) {
+				favoriteFolders.Add(srcFile);
+			}
+		}
+
 		// create directory button
 		private void createDir_Click(object sender, EventArgs e) {
 			createDirPanel.Toggle();
@@ -718,20 +855,52 @@ namespace FileDock {
 		protected void clone_Click(object sender, EventArgs e) {
 			// if we already have a right child
 			if (this.rightChild != null && !this.rightChild.IsDisposed) {
-				// then just pass this request on to them
-				this.rightChild.clone_Click(null, null);
+				this.rightChild.clone_Click(sender, e);
 			} else {
 				this.rightChild = new FileDockForm(this);
 				this.rightChild.Show();
 			}
 		}
-		
+		private void clone_DragDrop(object sender, DragEventArgs e) {
+			if ( e.Effect == DragDropEffects.All ) {
+				bool isFileDrop = e.Data.GetDataPresent(DataFormats.FileDrop);
+				bool isStringDrop = e.Data.GetDataPresent(DataFormats.Text);
+				string srcFile = "";
+				if ( isFileDrop ) {
+					srcFile = ((string[])(e.Data.GetData(DataFormats.FileDrop)))[0];
+				} else if ( isStringDrop ) {
+					srcFile = (string)e.Data.GetData(DataFormats.Text);
+				}
+				if ( !Directory.Exists(srcFile) ) {
+					srcFile = Regex.Replace(srcFile, "\\\\[^\\\\]+$", "");
+				}
+				if ( !Directory.Exists(srcFile) ) {
+					MessageBox.Show("No such folder: " + srcFile);
+					return;
+				}
+				this.clone_Click(null, null); // pop up a new frame
+				this.rightChild.currentPath = srcFile;
+			} else {
+				MessageBox.Show("huh?");
+			}
+		}
+		private void clone_DragEnter(object sender, DragEventArgs e) {
+			bool isFileDrop = e.Data.GetDataPresent(DataFormats.FileDrop);
+			bool isStringDrop = e.Data.GetDataPresent(DataFormats.Text);
+			if ( isFileDrop || isStringDrop ) {
+				e.Effect = DragDropEffects.All;
+			} else {
+				e.Effect = DragDropEffects.None;
+			}
+		}
+
+
 		// the zip button (and its droppable effects)
 		private void sevenZip_Click(object sender, EventArgs e) {
 			execCmd(@"C:\Program Files\7-Zip\7zFM.exe", "\"" + this.currentPath + "\"", null, false);
 		}
 		private void sevenZip_DragDrop(object sender, DragEventArgs e) {
-			if (e.Effect == DragDropEffects.Copy) {
+			if (e.Effect == DragDropEffects.All) {
 				bool isFileDrop = e.Data.GetDataPresent(DataFormats.FileDrop);
 				bool isStringDrop = e.Data.GetDataPresent(DataFormats.Text);
 				if (isFileDrop) {
@@ -752,7 +921,7 @@ namespace FileDock {
 			bool isFileDrop = e.Data.GetDataPresent(DataFormats.FileDrop);
 			bool isStringDrop = e.Data.GetDataPresent(DataFormats.Text);
 			if (isFileDrop || isStringDrop) {
-				e.Effect = DragDropEffects.Copy;
+				e.Effect = DragDropEffects.All;
 			} else {
 				e.Effect = DragDropEffects.None;
 			}
@@ -871,6 +1040,53 @@ namespace FileDock {
 		private void NoFocusAllowed(object sender, EventArgs e) {
 			this.listFiles.Focus();
 		}
+
+		private string AbbreviatePath(string path, Font font, float maxWidth) {
+			string text = path;
+			int maxLen = text.Length;
+			while ( TextRenderer.MeasureText(text, font).Width > maxWidth ) {
+				maxLen -= 1;
+				text = AbbreviatePath(path, maxLen);
+			}
+			return text;
+		}
+
+		private string AbbreviatePath(string path, int maxLen) {
+			string ret = "";
+			if ( path.Length > maxLen ) {
+				string[] elems = path.Split('\\');
+				
+				maxLen -= 10; // reserve a minimum 10 chars for the lead-in we will add later
+				int loadIndex = 1;
+				string last = elems[elems.Length - loadIndex];
+				while ( last.Length < maxLen && (loadIndex < (elems.Length - 2)) ) {
+					last = elems[elems.Length - (++loadIndex)] + "\\" + last;
+				}
+				if ( last.Length > maxLen ) {
+					int halfMax = maxLen >> 1; // divide by 2 (we will display the first and last equal chunk of the last path element)
+					ret += "\\" + last.Substring(0, halfMax) + "...";
+					ret += last.Substring(last.Length - halfMax, halfMax);
+				} else {
+					ret += "\\" + last;
+				}
+				maxLen += 8; // put the space back for the lead-in
+				if ( elems[1].Length <= Math.Abs(maxLen - ret.Length) ) {
+					ret = elems[0] + "\\" + elems[1] + ret;
+				} else {
+					ret = elems[0] + "\\" + elems[1].Substring(0, Math.Abs(maxLen - ret.Length)) + "..." + ret;
+				}
+
+			} else {
+				ret = path;
+			}
+			return ret;
+		}
+
+		
+
+		
+
+
 
 	}
 

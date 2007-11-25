@@ -24,27 +24,18 @@ namespace FileDock
 			{
 				abd.rc.top = 0;
 				abd.rc.bottom = SystemInformation.PrimaryMonitorSize.Height;
-				if (edge == ABE_LEFT) 
-				{
+				if (edge == ABE_LEFT) {
 					abd.rc.right = idealSize.Width;
-				}
-				else 
-				{
+				}	else {
 					abd.rc.right = SystemInformation.PrimaryMonitorSize.Width;
 					abd.rc.left = abd.rc.right - idealSize.Width;
 				}
-
-			}
-			else 
-			{
+			} else {
 				abd.rc.left = 0;
 				abd.rc.right = SystemInformation.PrimaryMonitorSize.Width;
-				if (edge == ABE_TOP) 
-				{
+				if (edge == ABE_TOP) {
 					abd.rc.bottom = idealSize.Height;
-				}
-				else 
-				{
+				}	else {
 					abd.rc.bottom = SystemInformation.PrimaryMonitorSize.Height;
 					abd.rc.top = abd.rc.bottom - idealSize.Height;
 				}
@@ -55,8 +46,7 @@ namespace FileDock
 
 			// Adjust the rectangle, depending on the edge to which the 
 			// appbar is anchored. 
-			switch (edge) 
-			{ 
+			switch (edge) { 
 				case ABE_LEFT: 
 					abd.rc.right = abd.rc.left + idealSize.Width;
 					break; 
@@ -386,7 +376,7 @@ namespace FileDock
 			public int cy;
 			public UInt32 flags;
 			public override string ToString() {
-				string ret = "[WINDOWPOS hWnd:"+((int)hWnd)+" hWndInsertAfter:"+((int)hWndInsertAfter)+" x:"+x+" y:"+y+" cx:"+cx+" cy:"+cy+" flags: "+zeroPad(Convert.ToString(flags,2),15)+"\n";
+				string ret = "[WINDOWPOS hWnd:" + ((int)hWnd) + " hWndInsertAfter:" + ((int)hWndInsertAfter) + " x:" + x + " y:" + y + " cx:" + cx + " cy:" + cy + " flags: ";
 				ret += (((flags & 0x0001) != 0) ? "SWP_NOSIZE " : "");
 				ret += (((flags & 0x0002) != 0) ? "SWP_NOMOVE " : "");
 				ret += (((flags & 0x0004) != 0) ? "SWP_NOZORDER " : "");
@@ -402,7 +392,7 @@ namespace FileDock
 				ret += (((flags & 0x0200) != 0) ? "SWP_NOREPOSITION " : "");
 				ret += (((flags & 0x2000) != 0) ? "SWP_DEFERERASE " : "");
 				ret += (((flags & 0x4000) != 0) ? "SWP_ASYNCWINDOWPOS " : "");
-				return ret;
+				return ret+"]";
 			}
 			private string zeroPad(string str, int len) {
 				while ( str.Length < len ) {

@@ -43,7 +43,7 @@ namespace FileDock
 		[
 		Browsable(false),
 		Category("AppBar Behavior"),
-		DefaultValue(AppBarDockStyle.ScreenTop),
+		DefaultValue(AppBarDockStyle.ScreenLeft),
 		Description("Designates which side of the screen the AppBar will dock to.")
 		]
 		public AppBarDockStyle AppBarDock 
@@ -55,7 +55,7 @@ namespace FileDock
 			set 
 			{
 				appBarDock = value;
-				UpdateDockedAppBarPosition(appBarDock);
+				RefreshPosition();
 			}
 		}
 
@@ -114,6 +114,9 @@ namespace FileDock
 			set 
 			{
 				idealSize = value;
+				if ( IsAppBarRegistered() ) {
+					RefreshPosition();
+				}
 			}
 		}
 
@@ -196,14 +199,13 @@ namespace FileDock
 					case NativeMethods.ABN_FULLSCREENAPP:
 						//Debug.Print("ABN_FULLSCREENAPP: "+m.ToString());
 						//TopMost = false;						
+						RefreshPosition();
 						break;
 					case NativeMethods.ABN_POSCHANGED:
 						Debug.Print("ABN_POSCHANGED: " + m.ToString());
-						if ( Visible )
-							Hide();
-						else
-							Show();
-						UpdateDockedAppBarPosition(this.AppBarDock);
+						if( IsAppBarRegistered() )
+							RefreshPosition();
+						
 						break;
 					case NativeMethods.ABN_STATECHANGE: /*TODO: respond to StateChanged message */;
 						Debug.Print("ABN_STATECHANGE: " + m.ToString());
@@ -215,23 +217,18 @@ namespace FileDock
 						Debug.Print("UNKNOWN: "+m.ToString());
 						break;
 				}
-			}
-			//if ( m.Msg != 0x4e ) Debug.Print("TO ME: " + m.ToString());
-			if ( m.Msg == (int)NativeMethods.WindowsMessages.WM_ACTIVATE ) {
+			} else if ( m.Msg == (int)NativeMethods.WindowsMessages.WM_ACTIVATE ) {
 				//NativeMethods.ActivateAppBar(this.Handle);
 			} else if ( m.Msg == (int)NativeMethods.WindowsMessages.WM_NCCALCSIZE ) {
 				//Debug.Print(m.ToString());
-			} else if ( m.Msg == (int)NativeMethods.WindowsMessages.WM_WINDOWPOSCHANGED ) {
-				//|| m.Msg == (int)NativeMethods.WindowsMessages.WM_WINDOWPOSCHANGING ) {
+			} else if ( m.Msg == (int)NativeMethods.WindowsMessages.WM_WINDOWPOSCHANGED
+				|| m.Msg == (int)NativeMethods.WindowsMessages.WM_WINDOWPOSCHANGING ) {
 				NativeMethods.WINDOWPOS pos = (NativeMethods.WINDOWPOS)Marshal.PtrToStructure(m.LParam,typeof(NativeMethods.WINDOWPOS));
 				Debug.Print(m.ToString());
 				Debug.Print(pos.ToString());
-				//NativeMethods.WindowPosChanged(this.Handle);
-			} else if ( m.Msg == (int)NativeMethods.WindowsMessages.WM_WINDOWPOSCHANGING ) {
-				NativeMethods.WINDOWPOS pos = (NativeMethods.WINDOWPOS)Marshal.PtrToStructure(m.LParam, typeof(NativeMethods.WINDOWPOS));
-				Debug.Print(m.ToString());
-				Debug.Print(pos.ToString());
-				//NativeMethods.WindowPosChanged(this.Handle);
+				NativeMethods.WindowPosChanged(this.Handle);
+				if ( IsAppBarRegistered() )
+					RefreshPosition();
 			}
 			base.WndProc(ref m);
 		}
