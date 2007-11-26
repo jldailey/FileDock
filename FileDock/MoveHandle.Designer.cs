@@ -1,4 +1,4 @@
-namespace AppBars {
+namespace FileDock {
 	partial class MoveHandle {
 		/// <summary> 
 		/// Required designer variable.
@@ -27,10 +27,11 @@ namespace AppBars {
 			// 
 			// MoveHandle
 			// 
-			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
-			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Inherit;
+			this.Cursor = System.Windows.Forms.Cursors.SizeAll;
+			this.DoubleBuffered = true;
 			this.Name = "MoveHandle";
-			this.Size = new System.Drawing.Size(148, 10);
+			this.Size = new System.Drawing.Size(150, 5);
 			this.ResumeLayout(false);
 
 		}

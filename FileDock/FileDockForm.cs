@@ -240,7 +240,7 @@ namespace FileDock {
 
 			if ( dockOnLoad ) {
 				this.RegisterAppBar();
-				this.IdealSize = new Size(240, SystemInformation.PrimaryMonitorSize.Height);
+				this.IdealSize = new Size(200, SystemInformation.PrimaryMonitorSize.Height);
 				this.AppBarDock = AppBarDockStyle.ScreenLeft;
 			} else if ( this.leftChild != null ) {
 				this.Size = new Size(this.leftChild.Width, this.leftChild.Height);
@@ -380,8 +380,13 @@ namespace FileDock {
 			}
 			base.OnClosing(e);
 		}
-		
 
+		protected override void OnResize(EventArgs e) {
+			base.OnResize(e);
+			moveHandle1.Width = this.Width - 4;
+			listFiles.Columns[0].Width = this.Width - 4;
+			Debug.Print("On Resize: " + this.Width + " : "+moveHandle1.Width);
+		}
 
 
 
@@ -1006,10 +1011,12 @@ namespace FileDock {
 			}
 		}
 		
-		public string StatusText {
+		/*
+		 * public string StatusText {
 			get { return statusLabel1.Text; }
 			set { statusLabel1.Text = value; }
 		}
+		 * */
 
 		public void refreshAllInstances() {
 			refresh_Click(null, null);
@@ -1097,10 +1104,10 @@ namespace FileDock {
 		public ActionHelper(FileDockForm f, object sender, string type) {
 			f.Cursor = Cursors.WaitCursor;
 			if (type == "Copy") {
-				f.StatusText = "Copying...";
+				//f.StatusText = "Copying...";
 				f.Update();
 			} else if (type == "Move") {
-				f.StatusText = "Moving...";
+				//f.StatusText = "Moving...";
 				f.Update();
 			}
 			this.form = f;
@@ -1109,9 +1116,9 @@ namespace FileDock {
 		}
 		public void Dispose() {
 			if (this.type == "Copy") {
-				form.StatusText = "Copied";
+				//form.StatusText = "Copied";
 			} else if (this.type == "Move") {
-				form.StatusText = "Moved";
+				//form.StatusText = "Moved";
 			}
 			this.form.Cursor = Cursors.Default;
 			form.refreshAllInstances();

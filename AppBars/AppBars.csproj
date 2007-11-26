@@ -105,24 +105,11 @@
     <Compile Include="AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="MoveHandle.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="MoveHandle.Designer.cs">
-      <DependentUpon>MoveHandle.cs</DependentUpon>
-    </Compile>
-    <Compile Include="NativeMethods.cs">
-      <SubType>Code</SubType>
-    </Compile>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="AppBar.resx">
       <SubType>Designer</SubType>
       <DependentUpon>AppBar.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="MoveHandle.resx">
-      <SubType>Designer</SubType>
-      <DependentUpon>MoveHandle.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />

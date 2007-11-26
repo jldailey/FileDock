@@ -29,11 +29,9 @@ namespace FileDock
         private void InitializeComponent()
         {
 					this.components = new System.ComponentModel.Container();
-					System.Windows.Forms.ListViewGroup listViewGroup4 = new System.Windows.Forms.ListViewGroup("Folders", System.Windows.Forms.HorizontalAlignment.Left);
-					System.Windows.Forms.ListViewGroup listViewGroup5 = new System.Windows.Forms.ListViewGroup("Files", System.Windows.Forms.HorizontalAlignment.Left);
-					System.Windows.Forms.ListViewGroup listViewGroup6 = new System.Windows.Forms.ListViewGroup("Hidden/System", System.Windows.Forms.HorizontalAlignment.Left);
-					this.statusStrip1 = new System.Windows.Forms.StatusStrip();
-					this.statusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
+					System.Windows.Forms.ListViewGroup listViewGroup10 = new System.Windows.Forms.ListViewGroup("Folders", System.Windows.Forms.HorizontalAlignment.Left);
+					System.Windows.Forms.ListViewGroup listViewGroup11 = new System.Windows.Forms.ListViewGroup("Files", System.Windows.Forms.HorizontalAlignment.Left);
+					System.Windows.Forms.ListViewGroup listViewGroup12 = new System.Windows.Forms.ListViewGroup("Hidden/System", System.Windows.Forms.HorizontalAlignment.Left);
 					this.fileSystemWatcher1 = new System.IO.FileSystemWatcher();
 					this.listFiles = new System.Windows.Forms.ListView();
 					this.columnHeader1 = new System.Windows.Forms.ColumnHeader();
@@ -41,6 +39,7 @@ namespace FileDock
 					this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
 					this.toolStripMenuItem2 = new System.Windows.Forms.ToolStripMenuItem();
 					this.flowLayoutPanel1 = new System.Windows.Forms.FlowLayoutPanel();
+					this.moveHandle1 = new MoveHandle();
 					this.button9 = new System.Windows.Forms.Button();
 					this.button8 = new System.Windows.Forms.Button();
 					this.button7 = new System.Windows.Forms.Button();
@@ -51,30 +50,9 @@ namespace FileDock
 					this.button4 = new System.Windows.Forms.Button();
 					this.button1 = new System.Windows.Forms.Button();
 					this.button10 = new System.Windows.Forms.Button();
-					this.moveHandle1 = new AppBars.MoveHandle();
-					this.statusStrip1.SuspendLayout();
 					((System.ComponentModel.ISupportInitialize)(this.fileSystemWatcher1)).BeginInit();
 					this.contextMenu1.SuspendLayout();
 					this.SuspendLayout();
-					// 
-					// statusStrip1
-					// 
-					this.statusStrip1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)
-											| System.Windows.Forms.AnchorStyles.Right)));
-					this.statusStrip1.Dock = System.Windows.Forms.DockStyle.None;
-					this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.statusLabel1});
-					this.statusStrip1.Location = new System.Drawing.Point(0, 491);
-					this.statusStrip1.Name = "statusStrip1";
-					this.statusStrip1.Size = new System.Drawing.Size(48, 22);
-					this.statusStrip1.SizingGrip = false;
-					this.statusStrip1.TabIndex = 7;
-					this.statusStrip1.Text = "statusStrip1";
-					// 
-					// statusLabel1
-					// 
-					this.statusLabel1.Name = "statusLabel1";
-					this.statusLabel1.Size = new System.Drawing.Size(0, 17);
 					// 
 					// fileSystemWatcher1
 					// 
@@ -92,19 +70,19 @@ namespace FileDock
             this.columnHeader1});
 					this.listFiles.Font = new System.Drawing.Font("Tahoma", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 					this.listFiles.FullRowSelect = true;
-					listViewGroup4.Header = "Folders";
-					listViewGroup4.Name = "listViewGroup1";
-					listViewGroup5.Header = "Files";
-					listViewGroup5.Name = "listViewGroup2";
-					listViewGroup6.Header = "Hidden/System";
-					listViewGroup6.Name = "listViewGroup3";
+					listViewGroup10.Header = "Folders";
+					listViewGroup10.Name = "listViewGroup1";
+					listViewGroup11.Header = "Files";
+					listViewGroup11.Name = "listViewGroup2";
+					listViewGroup12.Header = "Hidden/System";
+					listViewGroup12.Name = "listViewGroup3";
 					this.listFiles.Groups.AddRange(new System.Windows.Forms.ListViewGroup[] {
-            listViewGroup4,
-            listViewGroup5,
-            listViewGroup6});
+            listViewGroup10,
+            listViewGroup11,
+            listViewGroup12});
 					this.listFiles.Location = new System.Drawing.Point(2, 111);
 					this.listFiles.Name = "listFiles";
-					this.listFiles.Size = new System.Drawing.Size(185, 377);
+					this.listFiles.Size = new System.Drawing.Size(185, 397);
 					this.listFiles.TabIndex = 12;
 					this.listFiles.UseCompatibleStateImageBehavior = false;
 					this.listFiles.View = System.Windows.Forms.View.Details;
@@ -148,6 +126,14 @@ namespace FileDock
 					this.flowLayoutPanel1.Size = new System.Drawing.Size(160, 70);
 					this.flowLayoutPanel1.TabIndex = 11;
 					this.flowLayoutPanel1.Enter += new System.EventHandler(this.NoFocusAllowed);
+					// 
+					// moveHandle1
+					// 
+					this.moveHandle1.Cursor = System.Windows.Forms.Cursors.SizeAll;
+					this.moveHandle1.Location = new System.Drawing.Point(2, 2);
+					this.moveHandle1.Name = "moveHandle1";
+					this.moveHandle1.Size = new System.Drawing.Size(186, 5);
+					this.moveHandle1.TabIndex = 19;
 					// 
 					// button9
 					// 
@@ -324,21 +310,13 @@ namespace FileDock
 					this.button10.DragDrop += new System.Windows.Forms.DragEventHandler(this.favorites_DragDrop);
 					this.button10.DragEnter += new System.Windows.Forms.DragEventHandler(this.favorites_DragEnter);
 					// 
-					// moveHandle1
-					// 
-					this.moveHandle1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
-											| System.Windows.Forms.AnchorStyles.Right)));
-					this.moveHandle1.Location = new System.Drawing.Point(2, 3);
-					this.moveHandle1.Name = "moveHandle1";
-					this.moveHandle1.Size = new System.Drawing.Size(185, 5);
-					this.moveHandle1.TabIndex = 19;
-					// 
 					// FileDockForm
 					// 
 					this.AllowDrop = true;
 					this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 					this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-					this.ClientSize = new System.Drawing.Size(192, 513);
+					this.ClientSize = new System.Drawing.Size(192, 511);
+					this.Controls.Add(this.moveHandle1);
 					this.Controls.Add(this.flowLayoutPanel1);
 					this.Controls.Add(this.button10);
 					this.Controls.Add(this.button8);
@@ -346,13 +324,11 @@ namespace FileDock
 					this.Controls.Add(this.button1);
 					this.Controls.Add(this.button9);
 					this.Controls.Add(this.button6);
-					this.Controls.Add(this.statusStrip1);
 					this.Controls.Add(this.button4);
 					this.Controls.Add(this.button5);
 					this.Controls.Add(this.button3);
 					this.Controls.Add(this.listFiles);
 					this.Controls.Add(this.button2);
-					this.Controls.Add(this.moveHandle1);
 					this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.SizableToolWindow;
 					this.Name = "FileDockForm";
 					this.ShowInTaskbar = false;
@@ -360,12 +336,9 @@ namespace FileDock
 					this.TransparencyKey = System.Drawing.Color.Blue;
 					this.Enter += new System.EventHandler(this.NoFocusAllowed);
 					this.Activated += new System.EventHandler(this.NoFocusAllowed);
-					this.statusStrip1.ResumeLayout(false);
-					this.statusStrip1.PerformLayout();
 					((System.ComponentModel.ISupportInitialize)(this.fileSystemWatcher1)).EndInit();
 					this.contextMenu1.ResumeLayout(false);
 					this.ResumeLayout(false);
-					this.PerformLayout();
 
         }
 
@@ -374,14 +347,12 @@ namespace FileDock
 			private System.Windows.Forms.Button button3;
 			private System.Windows.Forms.Button button2;
 			private System.Windows.Forms.Button button4;
-			private System.Windows.Forms.StatusStrip statusStrip1;
 			private System.IO.FileSystemWatcher fileSystemWatcher1;
 			private System.Windows.Forms.Button button5;
 			private System.Windows.Forms.Button button6;
 			private System.Windows.Forms.ColumnHeader columnHeader1;
 			private System.Windows.Forms.Button button7;
 			private System.Windows.Forms.Button button8;
-			private System.Windows.Forms.ToolStripStatusLabel statusLabel1;
 			private System.Windows.Forms.ContextMenuStrip contextMenu1;
 			private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem1;
 			private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem2;
@@ -390,7 +361,7 @@ namespace FileDock
 			private System.Windows.Forms.Button button1;
 			public System.Windows.Forms.ListView listFiles;
 			private System.Windows.Forms.Button button10;
-			private AppBars.MoveHandle moveHandle1;
+			private FileDock.MoveHandle moveHandle1;
     }
 }
 
