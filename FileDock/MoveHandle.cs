@@ -20,6 +20,12 @@ namespace FileDock {
 			this.previewForm.BackColor = Color.Red;
 			this.previewForm.FormBorderStyle = FormBorderStyle.None;
 			this.previewForm.Hide();
+
+			this.previewForm2 = new Form();
+			this.previewForm2.Size = this.ParentForm.Size;
+			this.previewForm2.BackColor = Color.Blue;
+			this.previewForm2.FormBorderStyle = FormBorderStyle.None;
+			this.previewForm2.Hide();
 		}
 
 		protected override void OnPaint(PaintEventArgs e) {
@@ -38,21 +44,25 @@ namespace FileDock {
 			this.MouseMove +=	MoveHandler;
 		}
 		private Point dragBegin;
-		private Form previewForm;
+		private Form previewForm, previewForm2;
+		private FileDockForm.QueryPosResult dragResult;
 		void MoveHandler(object sender, MouseEventArgs args) {
 			Point delta = new Point(args.Location.X - dragBegin.X, args.Location.Y - dragBegin.Y);
 			//Debug.Print("Moved: " + delta.ToString());
-			Rectangle rc = ((FileDockForm)this.ParentForm).QueryPos(new Point(this.ParentForm.Left + delta.X, this.ParentForm.Top), this.ParentForm.Size);
-			this.previewForm.Bounds = rc;
+			Point draggedTo = new Point(this.ParentForm.Left + delta.X, this.ParentForm.Top);
+			this.previewForm2.Location = draggedTo;
+			dragResult = FileDockForm.QueryPos(this.ParentForm.Handle, draggedTo, this.ParentForm.Size);
+			this.previewForm.Bounds = dragResult.rc;
 			if( ! this.previewForm.Visible ) 
 				this.previewForm.Show();
-			//this.ParentForm.Left += delta.X;
-			//dragBegin = this.ParentForm.Location;
-			this.ParentForm.Invalidate();
+			if ( !this.previewForm2.Visible )
+				this.previewForm2.Show();
 		}
 		protected override void OnMouseUp(MouseEventArgs e) {
 			base.OnMouseUp(e);
 			this.previewForm.Hide();
+			this.previewForm2.Hide();
+			FileDockForm.SetPos(this.ParentForm.Handle, dragResult);
 			this.MouseMove -= MoveHandler;
 			Debug.Print("Drag End");
 		}

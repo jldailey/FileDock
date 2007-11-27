@@ -11,7 +11,14 @@ namespace FileDock {
 		public FileDockForm Owner;
 		public TogglePanel(FileDockForm Owner) {
 			this.Owner = Owner;
+			TogglePanel.Instances.Add(this);
 		}
+		private static List<TogglePanel> Instances = new List<TogglePanel>();
+
+		~TogglePanel() {
+			TogglePanel.Instances.Remove(this);
+		}
+
 		public delegate void ToggleDelegate();
 		public ToggleDelegate BeforeToggle;
 		public ToggleDelegate AfterToggle;
@@ -24,6 +31,13 @@ namespace FileDock {
 				Owner.listFiles.Height += this.Height;
 				this.Hide();
 			} else {
+				foreach ( TogglePanel P in TogglePanel.Instances ) {
+					if ( P.Visible ) {
+						Owner.listFiles.Top -= P.Height;
+						Owner.listFiles.Height += P.Height;
+						P.Hide();
+					}
+				}
 				Owner.listFiles.Top += this.Height;
 				Owner.listFiles.Height -= this.Height;
 				this.Show();

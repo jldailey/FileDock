@@ -18,56 +18,6 @@ using System.IO.Compression;
 namespace FileDock {
 	public partial class FileDockForm : AppBar {
 
-		#region LVS_EX
-		public enum LVS_EX {
-			LVS_EX_GRIDLINES = 0x00000001,
-			LVS_EX_SUBITEMIMAGES = 0x00000002,
-			LVS_EX_CHECKBOXES = 0x00000004,
-			LVS_EX_TRACKSELECT = 0x00000008,
-			LVS_EX_HEADERDRAGDROP = 0x00000010,
-			LVS_EX_FULLROWSELECT = 0x00000020,
-			LVS_EX_ONECLICKACTIVATE = 0x00000040,
-			LVS_EX_TWOCLICKACTIVATE = 0x00000080,
-			LVS_EX_FLATSB = 0x00000100,
-			LVS_EX_REGIONAL = 0x00000200,
-			LVS_EX_INFOTIP = 0x00000400,
-			LVS_EX_UNDERLINEHOT = 0x00000800,
-			LVS_EX_UNDERLINECOLD = 0x00001000,
-			LVS_EX_MULTIWORKAREAS = 0x00002000,
-			LVS_EX_LABELTIP = 0x00004000,
-			LVS_EX_BORDERSELECT = 0x00008000,
-			LVS_EX_DOUBLEBUFFER = 0x00010000,
-			LVS_EX_HIDELABELS = 0x00020000,
-			LVS_EX_SINGLEROW = 0x00040000,
-			LVS_EX_SNAPTOGRID = 0x00080000,
-			LVS_EX_SIMPLESELECT = 0x00100000
-		}
-
-		public enum LVM {
-			LVM_FIRST = 0x1000,
-			LVM_SETEXTENDEDLISTVIEWSTYLE = (LVM_FIRST + 54),
-			LVM_GETEXTENDEDLISTVIEWSTYLE = (LVM_FIRST + 55),
-		}
-
-		[DllImport("user32.dll", CharSet = CharSet.Auto)]
-		public static extern int SendMessage(IntPtr handle, int messg, int wparam, int lparam);
-
-
-		/// <summary>
-		/// Sets Double_Buffering and BorderSelect style
-		/// </summary>
-		public void SetExStyles() {
-			LVS_EX styles = (LVS_EX)SendMessage(listFiles.Handle, (int)LVM.LVM_GETEXTENDEDLISTVIEWSTYLE, 0, 0);
-			styles |= LVS_EX.LVS_EX_DOUBLEBUFFER | LVS_EX.LVS_EX_BORDERSELECT;
-			SendMessage(listFiles.Handle, (int)LVM.LVM_SETEXTENDEDLISTVIEWSTYLE, 0, (int)styles);
-
-			styles = (LVS_EX)SendMessage(this.Handle, (int)LVM.LVM_GETEXTENDEDLISTVIEWSTYLE, 0, 0);
-			styles |= LVS_EX.LVS_EX_DOUBLEBUFFER | LVS_EX.LVS_EX_BORDERSELECT;
-			SendMessage(this.Handle, (int)LVM.LVM_SETEXTENDEDLISTVIEWSTYLE, 0, (int)styles);
-		}
-
-		#endregion
-
 		public string currentDrive {
 			get {	return this.config["CurrentDrive"];	}
 			set {	this.config["CurrentDrive"] = value;}
@@ -145,6 +95,10 @@ namespace FileDock {
 
 			return ret;
 		}
+
+
+		// delegate type used when refreshing the file list asynchronously
+		private delegate void RefreshDelegate();
 		// re-read the current directory and fill up the ListView
 		public void refreshFiles(bool allFileDocks) {
 			refreshFiles();
@@ -225,6 +179,16 @@ namespace FileDock {
 		public bool dockOnLoad = true;
 
 		protected override void OnLoad(EventArgs e) {
+			if ( dockOnLoad ) {
+				RegisterAppBar();
+				this.idealSize = new Size(200, SystemInformation.PrimaryMonitorSize.Height);
+				this.idealLocation = new Point(0, 0);
+				this.RefreshPosition();
+			} else if ( this.leftChild != null ) {
+				this.Size = new Size(this.leftChild.Width, this.leftChild.Height);
+				this.Left = this.leftChild.Right;
+				this.TopMost = true;
+			}
 			base.OnLoad(e);
 			this.DragDrop += new DragEventHandler(FileDockForm_DragDrop);
 			this.DragOver += new DragEventHandler(FileDockForm_DragOver);
@@ -238,15 +202,6 @@ namespace FileDock {
 			listFiles.DragDrop += new DragEventHandler(FileDockForm_DragDrop);
 			listFiles.KeyUp += new KeyEventHandler(FileDockForm_KeyUp);
 
-			if ( dockOnLoad ) {
-				this.RegisterAppBar();
-				this.IdealSize = new Size(200, SystemInformation.PrimaryMonitorSize.Height);
-				this.AppBarDock = AppBarDockStyle.ScreenLeft;
-			} else if ( this.leftChild != null ) {
-				this.Size = new Size(this.leftChild.Width, this.leftChild.Height);
-				this.Left = this.leftChild.Right;
-				this.TopMost = true;
-			}
 			
 			// set double-buffering options
 			this.SetExStyles();
@@ -375,7 +330,7 @@ namespace FileDock {
 			this.config["SavedPathsMap"] = s.ToString();
 			this.config["Favorites"] = String.Join(";", favoriteFolders.ToArray());
 			this.config.SaveToRegistry();
-			if ( this.IsAppBarRegistered() ) {
+			if ( this.isAppBarRegistered ) {
 				this.UnregisterAppBar();
 			}
 			base.OnClosing(e);
@@ -388,7 +343,14 @@ namespace FileDock {
 			Debug.Print("On Resize: " + this.Width + " : "+moveHandle1.Width);
 		}
 
-
+		protected override CreateParams CreateParams {
+			get {
+				CreateParams cp = base.CreateParams;
+				//cp.Style &= (~0x00C00000); // no caption
+				cp.Style &= (~0x00800000); // no border
+				return cp;
+			}
+		}
 
 		#region UintEncode/DecodeBytes
 		private string UintEncodeBytes(byte[] B) {
@@ -761,9 +723,6 @@ namespace FileDock {
 			}
 		}
 		
-		// delegate type used when refreshing the file list asynchronously
-		private delegate void RefreshDelegate();
-		
 		// launch a file using the 'start' command-line tool to do the registry/mime lookup
 		private void startFileWithDefaultHandler(string filename) {
 			execCmd(@"C:\WINDOWS\System32\cmd.exe", "/c start \"start\" \"" + (filename) + "\"", null, true);
@@ -792,10 +751,10 @@ namespace FileDock {
 			searchPanel.Toggle();
 		}
 
+		// the favorites button
 		private void favorites_Click(object sender, EventArgs e) {
 			this.favPanel.Toggle();
 		}
-
 		private void favorites_DragEnter(object sender, DragEventArgs e) {
 			bool isFileDrop = e.Data.GetDataPresent(DataFormats.FileDrop);
 			bool isStringDrop = e.Data.GetDataPresent(DataFormats.Text);
@@ -805,7 +764,6 @@ namespace FileDock {
 				e.Effect = DragDropEffects.None;
 			}
 		}
-
 		private void favorites_DragDrop(object sender, DragEventArgs e) {
 			if ( e.Effect == DragDropEffects.All ) {
 				bool isStringDrop = e.Data.GetDataPresent(DataFormats.Text);
@@ -863,6 +821,7 @@ namespace FileDock {
 				this.rightChild.clone_Click(sender, e);
 			} else {
 				this.rightChild = new FileDockForm(this);
+				this.dockOnLoad = true;
 				this.rightChild.Show();
 			}
 		}
@@ -898,7 +857,6 @@ namespace FileDock {
 				e.Effect = DragDropEffects.None;
 			}
 		}
-
 
 		// the zip button (and its droppable effects)
 		private void sevenZip_Click(object sender, EventArgs e) {
@@ -1011,13 +969,6 @@ namespace FileDock {
 			}
 		}
 		
-		/*
-		 * public string StatusText {
-			get { return statusLabel1.Text; }
-			set { statusLabel1.Text = value; }
-		}
-		 * */
-
 		public void refreshAllInstances() {
 			refresh_Click(null, null);
 			FileDockForm cursor = this.leftChild;
@@ -1089,11 +1040,55 @@ namespace FileDock {
 			return ret;
 		}
 
-		
+		#region LVS_EX
+		public enum LVS_EX {
+			LVS_EX_GRIDLINES = 0x00000001,
+			LVS_EX_SUBITEMIMAGES = 0x00000002,
+			LVS_EX_CHECKBOXES = 0x00000004,
+			LVS_EX_TRACKSELECT = 0x00000008,
+			LVS_EX_HEADERDRAGDROP = 0x00000010,
+			LVS_EX_FULLROWSELECT = 0x00000020,
+			LVS_EX_ONECLICKACTIVATE = 0x00000040,
+			LVS_EX_TWOCLICKACTIVATE = 0x00000080,
+			LVS_EX_FLATSB = 0x00000100,
+			LVS_EX_REGIONAL = 0x00000200,
+			LVS_EX_INFOTIP = 0x00000400,
+			LVS_EX_UNDERLINEHOT = 0x00000800,
+			LVS_EX_UNDERLINECOLD = 0x00001000,
+			LVS_EX_MULTIWORKAREAS = 0x00002000,
+			LVS_EX_LABELTIP = 0x00004000,
+			LVS_EX_BORDERSELECT = 0x00008000,
+			LVS_EX_DOUBLEBUFFER = 0x00010000,
+			LVS_EX_HIDELABELS = 0x00020000,
+			LVS_EX_SINGLEROW = 0x00040000,
+			LVS_EX_SNAPTOGRID = 0x00080000,
+			LVS_EX_SIMPLESELECT = 0x00100000
+		}
 
-		
+		public enum LVM {
+			LVM_FIRST = 0x1000,
+			LVM_SETEXTENDEDLISTVIEWSTYLE = (LVM_FIRST + 54),
+			LVM_GETEXTENDEDLISTVIEWSTYLE = (LVM_FIRST + 55),
+		}
+
+		[DllImport("user32.dll", CharSet = CharSet.Auto)]
+		public static extern int SendMessage(IntPtr handle, int messg, int wparam, int lparam);
 
 
+		/// <summary>
+		/// Sets Double_Buffering and BorderSelect style
+		/// </summary>
+		public void SetExStyles() {
+			LVS_EX styles = (LVS_EX)SendMessage(listFiles.Handle, (int)LVM.LVM_GETEXTENDEDLISTVIEWSTYLE, 0, 0);
+			styles |= LVS_EX.LVS_EX_DOUBLEBUFFER | LVS_EX.LVS_EX_BORDERSELECT;
+			SendMessage(listFiles.Handle, (int)LVM.LVM_SETEXTENDEDLISTVIEWSTYLE, 0, (int)styles);
+
+			styles = (LVS_EX)SendMessage(this.Handle, (int)LVM.LVM_GETEXTENDEDLISTVIEWSTYLE, 0, 0);
+			styles |= LVS_EX.LVS_EX_DOUBLEBUFFER | LVS_EX.LVS_EX_BORDERSELECT;
+			SendMessage(this.Handle, (int)LVM.LVM_SETEXTENDEDLISTVIEWSTYLE, 0, (int)styles);
+		}
+
+		#endregion
 
 	}
 

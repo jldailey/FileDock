@@ -13,126 +13,27 @@ namespace FileDock
 	/// </summary>
 	public class AppBar : Form
 	{
-		private System.ComponentModel.Container components = null;
 
-		private bool autoRegisterOnLoad;
-		private bool isAppBarRegistered;
-		private AppBarDockStyle appBarDock;
-		private Size idealSize;
+		protected bool isAppBarRegistered;
+		protected Size idealSize;
+		protected Point idealLocation;
+
 		private int appBarCallback;//our callback message value for the wndproc
-
-		private const int WS_CAPTION = 0x00C00000;//used for hiding the border
-		private const int WS_BORDER = 0x00800000;//used for hiding the border
 
 		public AppBar()
 		{
 
 			appBarCallback = RegisterWindowMessage("Windows Forms AppBar");
 			isAppBarRegistered = false;
-			appBarDock = AppBarDockStyle.None;
 			idealSize = new Size(100,100);
-			this.FormBorderStyle = FormBorderStyle.FixedToolWindow;
-		}
-
-		public AppBarDockStyle AppBarDock 
-		{
-			get 
-			{
-				return appBarDock;
-			}
-			set 
-			{
-				appBarDock = value;
-				RefreshPosition();
-			}
-		}
-
-
-		public bool AutoRegisterOnLoad
-		{
-			get 
-			{
-				return autoRegisterOnLoad;
-			}
-			set 
-			{
-				autoRegisterOnLoad = value;
-			}
-		}
-
-		protected override CreateParams CreateParams 
-		{
-			get 
-			{
-				CreateParams cp = base.CreateParams;
-				cp.Style &= (~WS_CAPTION);
-				cp.Style &= (~WS_BORDER);
-				return cp;
-			}
-		}
-		
-		public Size IdealSize 
-		{
-			get 
-			{
-				return idealSize;
-			}
-			set 
-			{
-				idealSize = value;
-				if ( IsAppBarRegistered() ) {
-					RefreshPosition();
-				}
-			}
-		}
-
-		protected override void Dispose( bool disposing )
-		{
-			if( disposing )
-			{
-				if( components != null )
-					components.Dispose();
-			}
-			base.Dispose( disposing );
-		}
-
-		public bool IsAppBarRegistered() 
-		{
-			return isAppBarRegistered;
 		}
 
 		public void RefreshPosition() 
 		{
-			UpdateDockedAppBarPosition(AppBarDock);
+			QueryPosResult ret = QueryPos(this.Handle, this.idealLocation, this.idealSize);
+			SetPos(this.Handle, ret);
 		}
 
-		public bool RegisterAppBar() 
-		{
-			bool retVal = RegisterAppBar(this.Handle, this.appBarCallback);
-			this.isAppBarRegistered = retVal;
-			return retVal;
-		}
-
-		public void UnregisterAppBar() 
-		{
-			UnregisterAppBar(this.Handle);
-			this.isAppBarRegistered = false;
-		}
-
-		public void UpdateDockedAppBarPosition(AppBarDockStyle dockStyle) 
-		{
-			int edge = 0;
-			switch (dockStyle) 
-			{
-				case AppBarDockStyle.None: return;
-				case AppBarDockStyle.ScreenLeft: edge = 0;break;
-				case AppBarDockStyle.ScreenTop: edge = 1;break;
-				case AppBarDockStyle.ScreenRight: edge = 2;break;
-				default : edge = 3;break;
-
-			}
-			DockAppBar(this.Handle, edge , IdealSize);
-		}
 
 		protected override void WndProc(ref Message m)
 		{
@@ -142,14 +43,9 @@ namespace FileDock
 				{
 					case ABN_FULLSCREENAPP:
 						//Debug.Print("ABN_FULLSCREENAPP: "+m.ToString());
-						//TopMost = false;						
-						RefreshPosition();
 						break;
 					case ABN_POSCHANGED:
 						Debug.Print("ABN_POSCHANGED: " + m.ToString());
-						if( IsAppBarRegistered() )
-							RefreshPosition();
-						
 						break;
 					case ABN_STATECHANGE: /*TODO: respond to StateChanged message */;
 						Debug.Print("ABN_STATECHANGE: " + m.ToString());
@@ -162,7 +58,7 @@ namespace FileDock
 						break;
 				}
 			} else if ( m.Msg == (int)WindowsMessages.WM_ACTIVATE ) {
-				ActivateAppBar(this.Handle);
+				AppBar.ActivateAppBar(this.Handle);
 			} else if ( m.Msg == (int)WindowsMessages.WM_NCCALCSIZE ) {
 				//Debug.Print(m.ToString());
 			} else if ( m.Msg == (int)WindowsMessages.WM_WINDOWPOSCHANGED
@@ -171,48 +67,50 @@ namespace FileDock
 				//Debug.Print(m.ToString());
 				//Debug.Print(pos.ToString());
 				WindowPosChanged(this.Handle);
-				if ( IsAppBarRegistered() )
-					RefreshPosition();
 			}
 			base.WndProc(ref m);
 		}
 
 		protected override void OnClosing(CancelEventArgs e)
 		{
-			UnregisterAppBar();
+			AppBar.UnregisterAppBar(this.Handle);
 			base.OnClosing(e);
 		}
 
-		protected override void OnLoad(EventArgs e)
-		{
-			base.OnLoad(e);
-			if (AutoRegisterOnLoad) 
-			{
-				RegisterAppBar();
-			}
-		}
-
-		private void InitializeComponent() {
-			this.SuspendLayout();
-			// 
-			// AppBar
-			// 
-			this.ClientSize = new System.Drawing.Size(286, 259);
-			this.Name = "AppBar";
-			this.ResumeLayout(false);
-
-		}
-
-		public Rectangle QueryPos(Point idealLocation, Size idealSize) {
+		public static Rectangle SetPos(IntPtr hWnd, QueryPosResult pos) {
 			APP_BAR_DATA abd = new APP_BAR_DATA();
 			abd.cbSize = Marshal.SizeOf(abd);
-			abd.hWnd = this.Handle;
+			abd.hWnd = hWnd;
+			abd.uEdge = pos.edge;
+			abd.rc.top = pos.rc.Top;
+			abd.rc.bottom = pos.rc.Bottom;
+			abd.rc.left = pos.rc.Left;
+			abd.rc.right = pos.rc.Right;
+			// Pass the final bounding rectangle to the system. 
+			SHAppBarMessage(ABM_SETPOS, ref abd);
+			MoveWindow(abd.hWnd, abd.rc.left, abd.rc.top, abd.rc.right - abd.rc.left, abd.rc.bottom - abd.rc.top, true);
+			return new Rectangle(abd.rc.left, abd.rc.top, abd.rc.right - abd.rc.left, abd.rc.bottom - abd.rc.top);
+		}
+
+		public struct QueryPosResult {
+			public int edge;
+			public Rectangle rc;
+		}
+
+		public static QueryPosResult QueryPos(IntPtr hWnd, Point idealLocation, Size idealSize) {
+			APP_BAR_DATA abd = new APP_BAR_DATA();
+			abd.cbSize = Marshal.SizeOf(abd);
+			abd.hWnd = hWnd;
+			// saved the proposed rectangle
 			Rectangle R = new Rectangle(idealLocation, idealSize);
 			abd.rc.top = R.Top;
 			abd.rc.bottom = R.Bottom;
 			abd.rc.left = R.Left;
 			abd.rc.right = R.Right;
+			// then figure out which edge that rectangle should be on
+			// TODO: detecting TOP and BOTTOM edges
 			Screen S = Screen.FromRectangle(R);
+			abd.rc.bottom = S.Bounds.Bottom;
 			int centerX = (R.Left + R.Right) >> 1;
 			int centerScreen = S.Bounds.Width >> 1;
 			if ( centerX < 0 ) {
@@ -227,102 +125,50 @@ namespace FileDock
 				abd.uEdge = ABE_LEFT;
 			}
 			Debug.Print(centerX + " > " + centerScreen + "? => " + abd.uEdge);
-			// Query the system for an approved size and position. 
-			SHAppBarMessage(ABM_QUERYPOS, ref abd);
-			/*
-			// Adjust the rectangle, depending on the edge to which the 
-			// appbar is anchored. 
+			// once we've decided on an edge, align the rect cleanly to that edge
 			switch ( abd.uEdge ) {
 				case ABE_LEFT:
+					abd.rc.left = S.WorkingArea.Left;
 					abd.rc.right = abd.rc.left + idealSize.Width;
 					break;
 				case ABE_RIGHT:
+					abd.rc.right = S.WorkingArea.Right;
 					abd.rc.left = abd.rc.right - idealSize.Width;
 					break;
-				case ABE_TOP:
-					abd.rc.bottom = abd.rc.top + idealSize.Height;
-					break;
-				case ABE_BOTTOM:
-					abd.rc.top = abd.rc.bottom - idealSize.Height;
-					break;
-			}
-			*/
-			return new Rectangle(abd.rc.left,abd.rc.top, abd.rc.right - abd.rc.left, abd.rc.bottom - abd.rc.top);
-		}
-
-		public void DockAppBar(IntPtr hWnd, int edge, Size idealSize) 
-		{
-			APP_BAR_DATA abd = new APP_BAR_DATA();
-			abd.cbSize = Marshal.SizeOf(abd);
-			abd.hWnd = hWnd;
-			abd.uEdge = edge;
-
-			if (edge == ABE_LEFT || edge == ABE_RIGHT) 
-			{
-				abd.rc.top = 0;
-				abd.rc.bottom = SystemInformation.PrimaryMonitorSize.Height;
-				if (edge == ABE_LEFT) {
-					abd.rc.right = idealSize.Width;
-				}	else {
-					abd.rc.right = SystemInformation.PrimaryMonitorSize.Width;
-					abd.rc.left = abd.rc.right - idealSize.Width;
-				}
-			} else {
-				abd.rc.left = 0;
-				abd.rc.right = SystemInformation.PrimaryMonitorSize.Width;
-				if (edge == ABE_TOP) {
-					abd.rc.bottom = idealSize.Height;
-				}	else {
-					abd.rc.bottom = SystemInformation.PrimaryMonitorSize.Height;
-					abd.rc.top = abd.rc.bottom - idealSize.Height;
-				}
 			}
 
 			// Query the system for an approved size and position. 
-			SHAppBarMessage(ABM_QUERYPOS, ref abd); 
-
-			// Adjust the rectangle, depending on the edge to which the 
-			// appbar is anchored. 
-			switch (edge) { 
-				case ABE_LEFT: 
-					abd.rc.right = abd.rc.left + idealSize.Width;
-					break; 
-				case ABE_RIGHT: 
-					abd.rc.left= abd.rc.right - idealSize.Width;
-					break; 
-				case ABE_TOP: 
-					abd.rc.bottom = abd.rc.top + idealSize.Height;
-					break; 
-				case ABE_BOTTOM: 
-					abd.rc.top = abd.rc.bottom - idealSize.Height;
-					break; 
-			}
-
-			// Pass the final bounding rectangle to the system. 
-			SHAppBarMessage(ABM_SETPOS, ref abd); 
-
-			// Move and size the appbar so that it conforms to the 
-			// bounding rectangle passed to the system. 
-			MoveWindow(abd.hWnd, abd.rc.left, abd.rc.top, abd.rc.right - abd.rc.left, abd.rc.bottom - abd.rc.top, true); 
+			SHAppBarMessage(ABM_QUERYPOS, ref abd);
+			QueryPosResult ret = new QueryPosResult();
+			ret.edge = abd.uEdge;
+			ret.rc = new Rectangle(abd.rc.left,abd.rc.top, abd.rc.right - abd.rc.left, abd.rc.bottom - abd.rc.top);
+			return ret;
 		}
 
-		public bool RegisterAppBar(IntPtr hWnd, int uCallbackMessage) 
+		public void RegisterAppBar() {
+			AppBar.RegisterAppBar(this.Handle, this.appBarCallback);
+			this.isAppBarRegistered = true;
+		}
+		public static bool RegisterAppBar(IntPtr hWnd, int callback) 
 		{
 			APP_BAR_DATA abd = new APP_BAR_DATA();
 			abd.cbSize = Marshal.SizeOf(abd);
 			abd.hWnd = hWnd;
-			abd.uCallbackMessage = uCallbackMessage;
+			abd.uCallbackMessage = callback;
 			
 			int retVal = SHAppBarMessage(ABM_NEW, ref abd);
-			if (retVal == 0) 
-			{
+			if (retVal == 0) {
 				//registration failed
 				return false;
 			}
 			return true;
 		}
 
-		public void UnregisterAppBar(IntPtr hWnd) 
+		public void UnregisterAppBar() {
+			AppBar.UnregisterAppBar(this.Handle);
+			this.isAppBarRegistered = false;
+		}
+		public static void UnregisterAppBar(IntPtr hWnd) 
 		{
 			APP_BAR_DATA abd = new APP_BAR_DATA();
 			abd.cbSize = Marshal.SizeOf(abd);
@@ -330,7 +176,7 @@ namespace FileDock
 			SHAppBarMessage(ABM_REMOVE, ref abd);
 		}
 
-		public void ActivateAppBar(IntPtr hWnd)
+		public static void ActivateAppBar(IntPtr hWnd)
 		{
 			APP_BAR_DATA abd = new APP_BAR_DATA();
 			abd.cbSize = Marshal.SizeOf(abd);
@@ -338,13 +184,14 @@ namespace FileDock
 			SHAppBarMessage(ABM_ACTIVATE, ref abd);
 		}
 
-		public void WindowPosChanged(IntPtr hWnd) {
+		public static void WindowPosChanged(IntPtr hWnd) {
 			APP_BAR_DATA abd = new APP_BAR_DATA();
 			abd.cbSize = Marshal.SizeOf(abd);
 			abd.hWnd = hWnd;
 			SHAppBarMessage(ABM_WINDOWPOSCHANGED, ref abd);
 		}
-		
+
+		#region APPBAR API Definitions
 		private const int ABM_NEW = 0x00;
 		private const int ABM_REMOVE = 0x01;
 		private const int ABM_QUERYPOS = 0x02;
@@ -672,8 +519,8 @@ namespace FileDock
 				return new RECT(x, y, x + width, y + height);
 			}
 		}
-		
+		#endregion
 
-		
+
 	}
 }
