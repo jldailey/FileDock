@@ -109,7 +109,6 @@ namespace FileDock
 			abd.rc.left = R.Left;
 			abd.rc.right = R.Right;
 			// then figure out which edge that rectangle should be on
-			// TODO: detecting TOP and BOTTOM edges
 			Screen S = Screen.FromRectangle(R);
 			abd.rc.bottom = S.Bounds.Bottom;
 			if ( S.Bounds.Left != 0 ) {

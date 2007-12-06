@@ -99,6 +99,7 @@ namespace FileDock {
 
 		// delegate type used when refreshing the file list asynchronously
 		private delegate void RefreshDelegate();
+				
 		// re-read the current directory and fill up the ListView
 		public void refreshFiles(bool allFileDocks) {
 			refreshFiles();
@@ -109,6 +110,10 @@ namespace FileDock {
 			}
 		}
 		public void refreshFiles() {
+			fileSystemWatcher1.EnableRaisingEvents = false;
+			fileSystemWatcher1.Path = this.currentPath;
+			
+			
 			savedPaths[this.currentDrive] = this.currentDirectory;
 			listFiles.Items.Clear();
 			this.Refresh();
@@ -147,6 +152,7 @@ namespace FileDock {
 							node.ImageIndex = 1;
 							node.Group = listFiles.Groups[1];
 						}
+						fileSystemWatcher1.EnableRaisingEvents = true;
 					} catch (Exception e) {
 						MessageBox.Show("Exception: " + e.ToString());
 					}
@@ -201,7 +207,18 @@ namespace FileDock {
 			listFiles.DragOver += new DragEventHandler(FileDockForm_DragOver);
 			listFiles.DragDrop += new DragEventHandler(FileDockForm_DragDrop);
 			listFiles.KeyUp += new KeyEventHandler(FileDockForm_KeyUp);
-
+			fileSystemWatcher1.EnableRaisingEvents = false;
+			fileSystemWatcher1.NotifyFilter = NotifyFilters.DirectoryName | NotifyFilters.FileName;
+			fileSystemWatcher1.Filter = "";
+			fileSystemWatcher1.Created += new FileSystemEventHandler(delegate(object source, FileSystemEventArgs ev) {
+				refreshFiles();
+			});
+			fileSystemWatcher1.Deleted += new FileSystemEventHandler(delegate(object source, FileSystemEventArgs ev) {
+				refreshFiles();
+			});
+			fileSystemWatcher1.Renamed += new RenamedEventHandler(delegate(object source, RenamedEventArgs ev) {
+				refreshFiles();
+			});
 			
 			// set double-buffering options
 			this.SetExStyles();
