@@ -42,7 +42,12 @@ namespace FileDock
 				switch ((int)m.WParam) 
 				{
 					case ABN_FULLSCREENAPP:
-						//Debug.Print("ABN_FULLSCREENAPP: "+m.ToString());
+						Debug.Print("ABN_FULLSCREENAPP: "+m.ToString());
+						if ( (int)m.LParam != 0 ) {
+							Debug.Print("ALERT: m.LParam = "+((int)m.LParam));
+						}
+						TopMost = false;
+						SendToBack();
 						break;
 					case ABN_POSCHANGED:
 						Debug.Print("ABN_POSCHANGED: " + m.ToString());
@@ -58,14 +63,10 @@ namespace FileDock
 						break;
 				}
 			} else if ( m.Msg == (int)WindowsMessages.WM_ACTIVATE ) {
+				Debug.Print(m.ToString());
 				AppBar.ActivateAppBar(this.Handle);
-			} else if ( m.Msg == (int)WindowsMessages.WM_NCCALCSIZE ) {
-				//Debug.Print(m.ToString());
-			} else if ( m.Msg == (int)WindowsMessages.WM_WINDOWPOSCHANGED
-				|| m.Msg == (int)WindowsMessages.WM_WINDOWPOSCHANGING ) {
+			} else if ( m.Msg == (int)WindowsMessages.WM_WINDOWPOSCHANGED) {
 				WINDOWPOS pos = (WINDOWPOS)Marshal.PtrToStructure(m.LParam,typeof(WINDOWPOS));
-				//Debug.Print(m.ToString());
-				//Debug.Print(pos.ToString());
 				WindowPosChanged(this.Handle);
 			}
 			base.WndProc(ref m);
@@ -111,6 +112,9 @@ namespace FileDock
 			// TODO: detecting TOP and BOTTOM edges
 			Screen S = Screen.FromRectangle(R);
 			abd.rc.bottom = S.Bounds.Bottom;
+			if ( S.Bounds.Left != 0 ) {
+				R.Offset(-S.Bounds.Left, 0);
+			}
 			int centerX = (R.Left + R.Right) >> 1;
 			int centerScreen = S.Bounds.Width >> 1;
 			if ( centerX < 0 ) {
@@ -142,6 +146,7 @@ namespace FileDock
 			QueryPosResult ret = new QueryPosResult();
 			ret.edge = abd.uEdge;
 			ret.rc = new Rectangle(abd.rc.left,abd.rc.top, abd.rc.right - abd.rc.left, abd.rc.bottom - abd.rc.top);
+			// return the approved position
 			return ret;
 		}
 

@@ -280,14 +280,14 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:FileDock"
-        "ProductCode" = "8:{E2A2BF08-50D6-40D3-87C0-6773E9B084E4}"
-        "PackageCode" = "8:{0FB8A634-AF47-4BCE-B854-028F07CB0225}"
+        "ProductCode" = "8:{04BE1492-7B1E-4613-981C-A9CC2324A813}"
+        "PackageCode" = "8:{BA4A1AE9-729C-4BE6-986D-AB6ACBFA9B49}"
         "UpgradeCode" = "8:{FA5CD851-72DD-42AF-84B0-A642DD10538D}"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:FALSE"
-        "ProductVersion" = "8:1.4.1"
+        "ProductVersion" = "8:1.5.0"
         "Manufacturer" = "8:Jesse Dailey"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:"
@@ -801,7 +801,7 @@
         {
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_45C6486FD8234AB9A7663CC7767D21D8"
             {
-            "SourcePath" = "8:..\\FileDock\\obj\\Release\\FileDock.exe"
+            "SourcePath" = "8:..\\FileDock\\obj\\Debug\\FileDock.exe"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_A12B7285F5B14FCB936F048F3010C8A5"

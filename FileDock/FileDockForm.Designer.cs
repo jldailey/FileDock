@@ -32,6 +32,7 @@ namespace FileDock
 					System.Windows.Forms.ListViewGroup listViewGroup1 = new System.Windows.Forms.ListViewGroup("Folders", System.Windows.Forms.HorizontalAlignment.Left);
 					System.Windows.Forms.ListViewGroup listViewGroup2 = new System.Windows.Forms.ListViewGroup("Files", System.Windows.Forms.HorizontalAlignment.Left);
 					System.Windows.Forms.ListViewGroup listViewGroup3 = new System.Windows.Forms.ListViewGroup("Hidden/System", System.Windows.Forms.HorizontalAlignment.Left);
+					System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FileDockForm));
 					this.fileSystemWatcher1 = new System.IO.FileSystemWatcher();
 					this.listFiles = new System.Windows.Forms.ListView();
 					this.columnHeader1 = new System.Windows.Forms.ColumnHeader();
@@ -331,6 +332,7 @@ namespace FileDock
 					this.Controls.Add(this.listFiles);
 					this.Controls.Add(this.button2);
 					this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
+					this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
 					this.Name = "FileDockForm";
 					this.ShowInTaskbar = false;
 					this.Text = "FileDock";
