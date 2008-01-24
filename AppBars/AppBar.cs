@@ -42,7 +42,7 @@ namespace FileDock
 				switch ((int)m.WParam) 
 				{
 					case ABN_FULLSCREENAPP:
-						Debug.Print("ABN_FULLSCREENAPP: "+m.ToString());
+						//Debug.Print("ABN_FULLSCREENAPP: "+m.ToString());
 						if ( (int)m.LParam != 0 ) {
 							Debug.Print("ALERT: m.LParam = "+((int)m.LParam));
 						}

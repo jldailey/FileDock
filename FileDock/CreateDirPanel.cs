@@ -26,7 +26,6 @@ namespace FileDock {
 				try {
 					Directory.CreateDirectory(newDir);
 					this.Toggle();
-					Owner.refreshFiles();
 				} catch ( UnauthorizedAccessException ) {
 					MessageBox.Show("Not allowed.");
 				} catch ( DirectoryNotFoundException ) {

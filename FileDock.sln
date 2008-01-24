@@ -1,11 +1,11 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 9.00
-# Visual Studio 2005
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FileDock", "FileDock\FileDock.csproj", "{7555A5E2-F180-4E7A-9F0D-6ADC913CA954}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AppBars", "AppBars\AppBars.csproj", "{56912831-06FF-4515-AEC5-CAC61D703CDC}"
 EndProject
-Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "Setup1", "Setup1\Setup1.vdproj", "{2BF1A7ED-FD62-4092-AFC5-0C7BCF2B13A9}"
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "Installer", "Setup1\Setup1.vdproj", "{2BF1A7ED-FD62-4092-AFC5-0C7BCF2B13A9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

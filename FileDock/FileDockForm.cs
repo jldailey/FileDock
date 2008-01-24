@@ -14,6 +14,7 @@ using System.Runtime.Remoting.Messaging;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.IO.Compression;
+using System.Threading;
 
 namespace FileDock {
 	public partial class FileDockForm : AppBar {
@@ -37,12 +38,14 @@ namespace FileDock {
 		public Dictionary<string, string> savedPaths; // maps drives to the last path we visited on that drive
 
 		public FileDockForm() {
+			this.DoubleBuffered = true;
 			savedPaths = new Dictionary<string, string>();
 			InitializeComponent();
 			leftChild = null;
 		}
 
 		public FileDockForm(FileDockForm left) {
+			this.DoubleBuffered = true;
 			savedPaths = new Dictionary<string, string>();
 			InitializeComponent();
 			leftChild = left;
@@ -109,37 +112,38 @@ namespace FileDock {
 				this.rightChild.refreshFiles(true);
 			}
 		}
+		private Semaphore listSem = new Semaphore(1, 1);
 		public void refreshFiles() {
-			fileSystemWatcher1.EnableRaisingEvents = false;
-			fileSystemWatcher1.Path = this.currentPath;
-			
-			
-			savedPaths[this.currentDrive] = this.currentDirectory;
-			listFiles.Items.Clear();
-			this.Refresh();
 			try {
+				fileSystemWatcher1.Path = this.currentPath;
+				savedPaths[this.currentDrive] = this.currentDirectory;
+
+				this.Refresh();
+			
 				// build a new tree asynchronously, so that form can still draw itself while this is updating
-				RefreshDelegate d = new RefreshDelegate(delegate()
-				{
-					int maxLen = 30;
-					listFiles.Columns[0].Text = AbbreviatePath(this.currentPath, maxLen);
-					
-					ListViewItem tmp = listFiles.Items.Add("..");
-					tmp.Tag = "..";
-					tmp.Group = listFiles.Groups[0];
+				RefreshDelegate d = new RefreshDelegate(delegate() {
 					try {
+						listSem.WaitOne();
+						fileSystemWatcher1.EnableRaisingEvents = false;
+						listFiles.Items.Clear();
+						int maxLen = 30;
+						listFiles.Columns[0].Text = AbbreviatePath(this.currentPath, maxLen);
+
+						ListViewItem tmp = listFiles.Items.Add("..");
+						tmp.Tag = "..";
+						tmp.Group = listFiles.Groups[0];
 						string[] dirs = Directory.GetDirectories(currentPath);
 						Array.Sort<string>(dirs);
-						foreach (string dir in dirs) {
+						foreach ( string dir in dirs ) {
 							ListViewItem node = listFiles.Items.Add(Path.GetFileName(dir));
 							node.ToolTipText = Path.GetFileName(dir);
 							node.Tag = Path.GetFullPath(dir);
 							node.ImageIndex = 0;
 							node.Group = listFiles.Groups[0];
 						}
-						string[] files = Directory.GetFiles(currentPath,"*.*");
+						string[] files = Directory.GetFiles(currentPath, "*.*");
 						Array.Sort<string>(files);
-						foreach (string file in files) {
+						foreach ( string file in files ) {
 							if ( this.config["ShowHidden"] == "False" ) {
 								FileInfo inf = new FileInfo(file);
 								if ( (inf.Attributes & FileAttributes.Hidden) == FileAttributes.Hidden ) {
@@ -153,17 +157,21 @@ namespace FileDock {
 							node.Group = listFiles.Groups[1];
 						}
 						fileSystemWatcher1.EnableRaisingEvents = true;
-					} catch (Exception e) {
+					} catch ( Exception e ) {
 						MessageBox.Show("Exception: " + e.ToString());
+					} finally {
+						listSem.Release();
 					}
 				});
-
 				// begin the async build above
 				IAsyncResult res = listFiles.BeginInvoke(d);
 
 			} catch (UnauthorizedAccessException) {
 				MessageBox.Show("Access denied");
 				this.currentDirectory = "";
+			} catch( ArgumentException ) {
+				MessageBox.Show("Previous directory: " + this.currentDirectory + " is no longer valid.");
+				this.currentPath = "C:\\";
 			} catch (DirectoryNotFoundException) {
 				MessageBox.Show("Directory not found: " + currentPath);
 				this.currentDirectory = "";
@@ -186,6 +194,8 @@ namespace FileDock {
 
 		protected override void OnLoad(EventArgs e) {
 			if ( dockOnLoad ) {
+				RegisterAppBar();
+				UnregisterAppBar();
 				RegisterAppBar();
 				this.idealSize = new Size(200, SystemInformation.PrimaryMonitorSize.Height);
 				this.idealLocation = new Point(0, 0);
@@ -211,13 +221,16 @@ namespace FileDock {
 			fileSystemWatcher1.NotifyFilter = NotifyFilters.DirectoryName | NotifyFilters.FileName;
 			fileSystemWatcher1.Filter = "";
 			fileSystemWatcher1.Created += new FileSystemEventHandler(delegate(object source, FileSystemEventArgs ev) {
+				Debug.Print("Created "+ev.Name);
 				refreshFiles();
 			});
 			fileSystemWatcher1.Deleted += new FileSystemEventHandler(delegate(object source, FileSystemEventArgs ev) {
 				refreshFiles();
+				Debug.Print("Deleted "+ev.Name);
 			});
 			fileSystemWatcher1.Renamed += new RenamedEventHandler(delegate(object source, RenamedEventArgs ev) {
 				refreshFiles();
+				Debug.Print("Renamed: "+ev.OldName+" "+ev.Name);
 			});
 			
 			// set double-buffering options
@@ -284,11 +297,12 @@ namespace FileDock {
 			// now try to de-serialize the savedPaths mapping
 			try {
 				MemoryStream mem = new MemoryStream();
-				byte[] raw = UintDecodeBytes(this.config["SavedPathsMap"]);
-				mem.Write(raw, 0, raw.Length);
-				mem.Seek(0, SeekOrigin.Begin);
+				UintDecodeBytes(mem, this.config["SavedPathsMap"]);
+				mem.WriteByte(0x11);
+				mem.Position = 0;
 				savedPaths = (Dictionary<string, string>)(new BinaryFormatter()).Deserialize(mem);
-			} catch ( SerializationException ) {
+			} catch ( SerializationException ex ) {
+				// pass
 			} catch ( Exception ex ) {
 				MessageBox.Show(ex.ToString());
 			}
@@ -341,10 +355,10 @@ namespace FileDock {
 			}
 			MemoryStream mem = new MemoryStream();
 			(new BinaryFormatter()).Serialize(mem,savedPaths);
-			byte[] B = mem.ToArray();
-			string s = UintEncodeBytes(B);
+			mem.Position = 0;
+			string s = UintEncodeBytes(mem);
 			mem.Close();
-			this.config["SavedPathsMap"] = s.ToString();
+			this.config["SavedPathsMap"] = s;
 			this.config["Favorites"] = String.Join(";", favoriteFolders.ToArray());
 			this.config.SaveToRegistry();
 			if ( this.isAppBarRegistered ) {
@@ -370,34 +384,31 @@ namespace FileDock {
 		}
 
 		#region UintEncode/DecodeBytes
-		private string UintEncodeBytes(byte[] B) {
-			string s = "";
-			foreach ( byte b in B ) {
-				string c = "" + (uint)b;
-				while ( c.Length < 3 ) {
-					c = "0" + c;
-				}
-				s += c;
+		private string UintEncodeBytes(MemoryStream input) {
+			StringBuilder s = new StringBuilder();
+			int b;
+			while ( (b = input.ReadByte()) != -1 ) {
+				s.AppendFormat("{0:X2}", (byte)b);
 			}
-			return s;
+			return s.ToString();
 		}
-		private byte[] UintDecodeBytes(string s) {
-			byte[] b = new byte[(int)(s.Length / 3)];
-			uint b_ptr = 0;
-			StringReader r = new StringReader(s);
-			char[] buffer = new char[3];
-			while ( r.Read(buffer, 0, 3) == 3 ) {
-				string c = "" + buffer[0] + "" + buffer[1] + "" + buffer[2];
-				uint d = uint.Parse(c);
-				b[b_ptr] = (byte)d;
-				b_ptr++;
+		private void UintDecodeBytes(MemoryStream output, string src) {
+			StringReader r = new StringReader(src);
+			char[] buffer = new char[2];
+			while ( r.Read(buffer, 0, 2) == 2 ) {
+				byte d = Byte.Parse("" + buffer[0] + buffer[1], System.Globalization.NumberStyles.AllowHexSpecifier);
+				output.WriteByte(d);
 			}
-			return b;
 		}
 		#endregion
 
 		#region Path rolling
-		// this would only be used by Instance 0, the far left bar, to track left-side overflow
+		/* Path rolling is the mechanism that would enforce mac-like file manager behavior.
+		 * To do this, you make activating a folder spawn a new instance.
+		 * You also limit the maximum number of instances to something like 3, then once you hit that limit,
+		 * you would roll paths left instead of spawning the new instance.
+		 */
+		// this stack would be used by Instance 0, the far left bar, to track left-side overflow
 		private Stack<string> pathStack = null;
 		public void pushPathLeft(string path) {
 			if ( this.leftChild != null ) {
@@ -410,6 +421,7 @@ namespace FileDock {
 				}
 				pathStack.Push(this.currentPath);
 			}
+			// then update our current path
 			this.currentPath = path;
 		}
 		#endregion
@@ -431,13 +443,10 @@ namespace FileDock {
 			if ( (FileDockForm.ModifierKeys & Keys.Control) == 0
 					&& (FileDockForm.ModifierKeys & Keys.Shift) == 0
 					) {
-				Debug.Print("double click fired");
 				if ( hoveredItem != null ) {
 					if ( config["SingleClick"] == "True" ) {
-						Debug.Print("Double click ignored");
 						return;
 					}
-					Debug.Print("Double click allowed");
 					activateFileFolder(hoveredItem);
 				}
 			}
@@ -447,9 +456,7 @@ namespace FileDock {
 			if ( (FileDockForm.ModifierKeys & Keys.Control) == 0
 					&& (FileDockForm.ModifierKeys & Keys.Shift) == 0
 					) {
-				Debug.Print("single click fired");
 				if ( hoveredItem != null && config["SingleClick"] == "True" ) {
-					Debug.Print("single click allowed");
 					activateFileFolder(hoveredItem);
 				}
 			}
@@ -459,8 +466,6 @@ namespace FileDock {
 		private ListViewItem hoveredItem;
 		private ToolTip hoveredTip;
 		private void listFiles_MouseMove(object sender, MouseEventArgs e) {
-			// select a whole row all at once here, so ignore the x 
-			//Debug.Print("X: " + e.X + " Y: " + e.Y);
 			ListViewItem newHoveredItem = listFiles.GetItemAt(e.X, e.Y);
 			if (newHoveredItem != null) {
 				if (prevHoveredItem != null && prevHoveredItem == newHoveredItem) {
@@ -1100,9 +1105,6 @@ namespace FileDock {
 			styles |= LVS_EX.LVS_EX_DOUBLEBUFFER | LVS_EX.LVS_EX_BORDERSELECT;
 			SendMessage(listFiles.Handle, (int)LVM.LVM_SETEXTENDEDLISTVIEWSTYLE, 0, (int)styles);
 
-			styles = (LVS_EX)SendMessage(this.Handle, (int)LVM.LVM_GETEXTENDEDLISTVIEWSTYLE, 0, 0);
-			styles |= LVS_EX.LVS_EX_DOUBLEBUFFER | LVS_EX.LVS_EX_BORDERSELECT;
-			SendMessage(this.Handle, (int)LVM.LVM_SETEXTENDEDLISTVIEWSTYLE, 0, (int)styles);
 		}
 
 		#endregion

@@ -275,19 +275,20 @@
         "MsiBootstrapper"
         {
         "LangId" = "3:1033"
+        "RequiresElevation" = "11:FALSE"
         }
         "Product"
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:FileDock"
-        "ProductCode" = "8:{04BE1492-7B1E-4613-981C-A9CC2324A813}"
-        "PackageCode" = "8:{BA4A1AE9-729C-4BE6-986D-AB6ACBFA9B49}"
+        "ProductCode" = "8:{34879482-EB32-4DE3-9EC3-E362359736AE}"
+        "PackageCode" = "8:{E1F83D62-59B6-4EF0-85B5-A81A1FB993DE}"
         "UpgradeCode" = "8:{FA5CD851-72DD-42AF-84B0-A642DD10538D}"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:FALSE"
-        "ProductVersion" = "8:1.5.0"
+        "ProductVersion" = "8:1.5.9"
         "Manufacturer" = "8:Jesse Dailey"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:"
@@ -827,9 +828,6 @@
                 {
                 }
             }
-        }
-        "VJSharpPlugin"
-        {
         }
     }
 }

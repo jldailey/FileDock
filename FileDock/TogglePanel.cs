@@ -31,6 +31,7 @@ namespace FileDock {
 				Owner.listFiles.Height += this.Height;
 				this.Hide();
 			} else {
+				// hide all other toggle-able panels
 				foreach ( TogglePanel P in TogglePanel.Instances ) {
 					if ( P.Visible ) {
 						Owner.listFiles.Top -= P.Height;
