@@ -27,7 +27,7 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_AE5D72D3FC3CE396FEEA7FEA7980680D"
+        "MsmKey" = "8:_9D4A4ADA3067077927B2603F919360FE"
         "OwnerKey" = "8:_45C6486FD8234AB9A7663CC7767D21D8"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -46,7 +46,7 @@
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_AE5D72D3FC3CE396FEEA7FEA7980680D"
+        "OwnerKey" = "8:_9D4A4ADA3067077927B2603F919360FE"
         "MsmSig" = "8:_UNDEFINED"
         }
     }
@@ -174,14 +174,14 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
-            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_AE5D72D3FC3CE396FEEA7FEA7980680D"
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_9D4A4ADA3067077927B2603F919360FE"
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
             "AssemblyAsmDisplayName" = "8:AppBars, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL"
                 "ScatterAssemblies"
                 {
-                    "_AE5D72D3FC3CE396FEEA7FEA7980680D"
+                    "_9D4A4ADA3067077927B2603F919360FE"
                     {
                     "Name" = "8:AppBars.dll"
                     "Attributes" = "3:512"
@@ -281,14 +281,14 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:FileDock"
-        "ProductCode" = "8:{34879482-EB32-4DE3-9EC3-E362359736AE}"
-        "PackageCode" = "8:{E1F83D62-59B6-4EF0-85B5-A81A1FB993DE}"
+        "ProductCode" = "8:{5CF7067F-EB2E-47A4-AF3E-6AB77AA69231}"
+        "PackageCode" = "8:{60864EE6-272E-4D17-A790-349DCD4680FD}"
         "UpgradeCode" = "8:{FA5CD851-72DD-42AF-84B0-A642DD10538D}"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:FALSE"
-        "ProductVersion" = "8:1.5.9"
+        "ProductVersion" = "8:1.6.1"
         "Manufacturer" = "8:Jesse Dailey"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:"
@@ -802,7 +802,7 @@
         {
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_45C6486FD8234AB9A7663CC7767D21D8"
             {
-            "SourcePath" = "8:..\\FileDock\\obj\\Debug\\FileDock.exe"
+            "SourcePath" = "8:..\\FileDock\\obj\\Release\\FileDock.exe"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_A12B7285F5B14FCB936F048F3010C8A5"

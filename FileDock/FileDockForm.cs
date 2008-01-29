@@ -53,6 +53,9 @@ namespace FileDock {
 		
 		// re-read all the system drives and re-draw the DriveButtons
 		public void refreshDrives() {
+			refreshDrives(true);
+		}
+		public void refreshDrives(bool moveListFiles) {
 			Debug.Print("refreshDrives");
 			int driveCount = 0;
 			DriveInfo[] drives = DriveInfo.GetDrives();
@@ -89,8 +92,10 @@ namespace FileDock {
 				flowLayoutPanel1.Controls.Add(b);
 				driveCount++;
 			}
-			listFiles.Top = button3.Bottom + 4;
-			listFiles.Left = 2;
+			if ( moveListFiles ) {
+				listFiles.Top = button3.Bottom + 4;
+				listFiles.Left = 2;
+			}
 		}
 		public string formatFileNameForList(string filename) {
 			string ret = "";
@@ -212,6 +217,7 @@ namespace FileDock {
 			this.Enter += new EventHandler(NoFocusAllowed);
 			listFiles.ItemDrag += new ItemDragEventHandler(listFiles_ItemDrag);
 			listFiles.MouseMove += new MouseEventHandler(listFiles_MouseMove);
+			listFiles.MouseLeave += new EventHandler(listFiles_MouseLeave);
 			listFiles.MouseClick += new MouseEventHandler(listFiles_MouseClick);
 			listFiles.DoubleClick += new EventHandler(listFiles_DoubleClick);
 			listFiles.DragOver += new DragEventHandler(FileDockForm_DragOver);
@@ -348,7 +354,7 @@ namespace FileDock {
 
 
 		}
-		
+
 		protected override void OnClosing(CancelEventArgs e) {
 			if (this.rightChild != null && !this.rightChild.IsDisposed) {
 				this.rightChild.Close();
@@ -481,7 +487,15 @@ namespace FileDock {
 				hoveredTip = new ToolTip();
 				Point hoverPos = this.PointToClient(e.Location);
 				hoverPos = new Point(hoverPos.X + this.Left + 15, hoverPos.Y + 10);
-				hoveredTip.Show(hoveredItem.Text, listFiles, hoverPos);
+				string hoverText = hoveredItem.Text;
+				try {
+					string fname = (string)hoveredItem.Tag;
+					FileInfo f = new FileInfo(fname);
+					double kb = f.Length / 1024.0;
+					hoverText += String.Format("\n- {0:0,0.00} kb", kb);
+				} catch ( FileNotFoundException ) {
+				}
+				hoveredTip.Show(hoverText, listFiles, hoverPos);
 			}
 			//Debug.Print("Hovered: " + hoveredItem.Text + " prevHovered: " + (prevHoveredItem != null ? prevHoveredItem.Text : "null"));
 			if (prevHoveredItem != null) {
@@ -494,6 +508,14 @@ namespace FileDock {
 			}
 		}
 
+		void listFiles_MouseLeave(object sender, EventArgs e) {
+			if ( hoveredTip != null ) {
+				hoveredTip.Hide(listFiles);
+				hoveredTip.Dispose();
+				hoveredTip = null;
+			}
+		}
+		
 		// when an item is first picked up:
 		private void listFiles_ItemDrag(object sender, ItemDragEventArgs e) {
 			ListViewItem node = (ListViewItem)e.Item;
@@ -669,6 +691,9 @@ namespace FileDock {
 				string new_dir = (String)node.Tag;
 				if (new_dir == ".") {	// do nothing
 					return;
+				} else if( new_dir == "..refresh.." ) {
+					refreshFiles();
+					return;
 				} else if (new_dir == "..") {
 					if (this.currentDirectory.Contains("\\")) {
 						//remove the last path element from the current directory
@@ -827,7 +852,7 @@ namespace FileDock {
 
 		// the refresh button
 		private void refresh_Click(object sender, EventArgs e) {
-			refreshDrives();
+			refreshDrives(false);
 			refreshFiles();
 		}
 		

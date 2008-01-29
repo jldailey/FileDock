@@ -39,7 +39,7 @@ namespace FileDock {
 			this.listFavs.FormattingEnabled = true;
 			this.listFavs.Location = new System.Drawing.Point(2, 2);
 			this.listFavs.Name = "listFavs";
-			this.listFavs.Size = new System.Drawing.Size(240, 59);
+			this.listFavs.Size = new System.Drawing.Size(235, 55);
 			this.listFavs.TabIndex = 0;
 			// 
 			// FavoritesPanel

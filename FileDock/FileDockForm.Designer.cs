@@ -142,8 +142,8 @@ namespace FileDock
 					this.button9.TabIndex = 15;
 					this.button9.TabStop = false;
 					this.button9.UseVisualStyleBackColor = true;
-					this.button9.Enter += new System.EventHandler(this.NoFocusAllowed);
 					this.button9.Click += new System.EventHandler(this.createDir_Click);
+					this.button9.Enter += new System.EventHandler(this.NoFocusAllowed);
 					// 
 					// button8
 					// 
@@ -159,9 +159,9 @@ namespace FileDock
 					this.button8.TabIndex = 14;
 					this.button8.TabStop = false;
 					this.button8.UseVisualStyleBackColor = true;
-					this.button8.Enter += new System.EventHandler(this.NoFocusAllowed);
 					this.button8.Click += new System.EventHandler(this.clone_Click);
 					this.button8.DragDrop += new System.Windows.Forms.DragEventHandler(this.clone_DragDrop);
+					this.button8.Enter += new System.EventHandler(this.NoFocusAllowed);
 					this.button8.DragEnter += new System.Windows.Forms.DragEventHandler(this.clone_DragEnter);
 					// 
 					// button7
@@ -178,8 +178,8 @@ namespace FileDock
 					this.button7.TabIndex = 13;
 					this.button7.TabStop = false;
 					this.button7.UseVisualStyleBackColor = true;
-					this.button7.Enter += new System.EventHandler(this.NoFocusAllowed);
 					this.button7.Click += new System.EventHandler(this.config_Click);
+					this.button7.Enter += new System.EventHandler(this.NoFocusAllowed);
 					// 
 					// button6
 					// 
@@ -195,9 +195,9 @@ namespace FileDock
 					this.button6.TabIndex = 10;
 					this.button6.TabStop = false;
 					this.button6.UseVisualStyleBackColor = true;
-					this.button6.Enter += new System.EventHandler(this.NoFocusAllowed);
 					this.button6.Click += new System.EventHandler(this.delete_Click);
 					this.button6.DragDrop += new System.Windows.Forms.DragEventHandler(this.delete_DragDrop);
+					this.button6.Enter += new System.EventHandler(this.NoFocusAllowed);
 					this.button6.DragEnter += new System.Windows.Forms.DragEventHandler(this.delete_DragEnter);
 					// 
 					// button5
@@ -214,9 +214,9 @@ namespace FileDock
 					this.button5.TabIndex = 9;
 					this.button5.TabStop = false;
 					this.button5.UseVisualStyleBackColor = true;
-					this.button5.Enter += new System.EventHandler(this.NoFocusAllowed);
 					this.button5.Click += new System.EventHandler(this.sevenZip_Click);
 					this.button5.DragDrop += new System.Windows.Forms.DragEventHandler(this.sevenZip_DragDrop);
+					this.button5.Enter += new System.EventHandler(this.NoFocusAllowed);
 					this.button5.DragEnter += new System.Windows.Forms.DragEventHandler(this.sevenZip_DragEnter);
 					// 
 					// button3
@@ -232,8 +232,8 @@ namespace FileDock
 					this.button3.TabIndex = 4;
 					this.button3.TabStop = false;
 					this.button3.UseVisualStyleBackColor = true;
-					this.button3.Enter += new System.EventHandler(this.NoFocusAllowed);
 					this.button3.Click += new System.EventHandler(this.search_Click);
+					this.button3.Enter += new System.EventHandler(this.NoFocusAllowed);
 					// 
 					// button2
 					// 
@@ -248,8 +248,8 @@ namespace FileDock
 					this.button2.TabIndex = 5;
 					this.button2.TabStop = false;
 					this.button2.UseVisualStyleBackColor = true;
-					this.button2.Enter += new System.EventHandler(this.NoFocusAllowed);
 					this.button2.Click += new System.EventHandler(this.refresh_Click);
+					this.button2.Enter += new System.EventHandler(this.NoFocusAllowed);
 					// 
 					// button4
 					// 
@@ -266,8 +266,8 @@ namespace FileDock
 					this.button4.TabStop = false;
 					this.button4.TextAlign = System.Drawing.ContentAlignment.TopLeft;
 					this.button4.UseVisualStyleBackColor = true;
-					this.button4.Enter += new System.EventHandler(this.NoFocusAllowed);
 					this.button4.Click += new System.EventHandler(this.close_Click);
+					this.button4.Enter += new System.EventHandler(this.NoFocusAllowed);
 					// 
 					// button1
 					// 
@@ -282,8 +282,8 @@ namespace FileDock
 					this.button1.TabIndex = 17;
 					this.button1.TabStop = false;
 					this.button1.UseVisualStyleBackColor = true;
-					this.button1.Enter += new System.EventHandler(this.NoFocusAllowed);
 					this.button1.Click += new System.EventHandler(this.createFile_Click);
+					this.button1.Enter += new System.EventHandler(this.NoFocusAllowed);
 					// 
 					// button10
 					// 
@@ -302,6 +302,7 @@ namespace FileDock
 					this.button10.UseVisualStyleBackColor = true;
 					this.button10.Click += new System.EventHandler(this.favorites_Click);
 					this.button10.DragDrop += new System.Windows.Forms.DragEventHandler(this.favorites_DragDrop);
+					this.button10.Enter += new System.EventHandler(this.NoFocusAllowed);
 					this.button10.DragEnter += new System.Windows.Forms.DragEventHandler(this.favorites_DragEnter);
 					// 
 					// moveHandle1
@@ -337,8 +338,8 @@ namespace FileDock
 					this.ShowInTaskbar = false;
 					this.Text = "FileDock";
 					this.TransparencyKey = System.Drawing.Color.Blue;
-					this.Enter += new System.EventHandler(this.NoFocusAllowed);
 					this.Activated += new System.EventHandler(this.NoFocusAllowed);
+					this.Enter += new System.EventHandler(this.NoFocusAllowed);
 					((System.ComponentModel.ISupportInitialize)(this.fileSystemWatcher1)).EndInit();
 					this.contextMenu1.ResumeLayout(false);
 					this.ResumeLayout(false);

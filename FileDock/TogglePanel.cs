@@ -19,6 +19,14 @@ namespace FileDock {
 			TogglePanel.Instances.Remove(this);
 		}
 
+		public static void CollapseAll() {
+			foreach(TogglePanel p in Instances) {
+				if( p.Visible) {
+					p.Toggle();
+				}
+			}
+		}
+
 		public delegate void ToggleDelegate();
 		public ToggleDelegate BeforeToggle;
 		public ToggleDelegate AfterToggle;
@@ -32,13 +40,7 @@ namespace FileDock {
 				this.Hide();
 			} else {
 				// hide all other toggle-able panels
-				foreach ( TogglePanel P in TogglePanel.Instances ) {
-					if ( P.Visible ) {
-						Owner.listFiles.Top -= P.Height;
-						Owner.listFiles.Height += P.Height;
-						P.Hide();
-					}
-				}
+				TogglePanel.CollapseAll();
 				Owner.listFiles.Top += this.Height;
 				Owner.listFiles.Height -= this.Height;
 				this.Show();
