@@ -13,8 +13,10 @@ namespace FileDock {
 		public CreateDirPanel(FileDockForm Owner):base(Owner) {
 			InitializeComponent();
 			this.AfterToggle += delegate {
-				if ( this.Visible )
+				if ( this.Visible ) {
+					this.textBox1.Text = "";
 					this.textBox1.Focus();
+				}
 			};
 		}
 		private void create_Click(object sender, EventArgs e) {

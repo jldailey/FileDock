@@ -12,14 +12,16 @@ namespace FileDock {
 		public CreateFilePanel(FileDockForm Owner):base(Owner) {
 			InitializeComponent();
 			this.AfterToggle += delegate {
-				if ( this.Visible )
+				if ( this.Visible ) {
+					this.textBox1.Text = "";
 					this.textBox1.Focus();
+				}
 			};
 			this.button1.Click += new EventHandler(create_Click);
 		}
 
 		private void create_Click(object sender, EventArgs e) {
-		
+
 			string newFile = this.textBox1.Text;
 			newFile = Owner.currentPath + "\\" + newFile;
 
@@ -27,7 +29,7 @@ namespace FileDock {
 				MessageBox.Show("Already exists.");
 			} else {
 				try {
-					File.Create(newFile);
+					File.Create(newFile).Close();
 					this.Toggle();
 				} catch ( UnauthorizedAccessException ) {
 					MessageBox.Show("Not allowed.");
