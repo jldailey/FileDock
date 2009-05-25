@@ -15,6 +15,12 @@
     {
         "Entry"
         {
+        "MsmKey" = "8:_42B1FAEFE7FA4F6189D0CABFB1E728C5"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_45C6486FD8234AB9A7663CC7767D21D8"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -27,7 +33,7 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_9D4A4ADA3067077927B2603F919360FE"
+        "MsmKey" = "8:_AF5539C85560340F9C5AC7ECAAE94340"
         "OwnerKey" = "8:_45C6486FD8234AB9A7663CC7767D21D8"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -46,7 +52,13 @@
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_9D4A4ADA3067077927B2603F919360FE"
+        "OwnerKey" = "8:_42B1FAEFE7FA4F6189D0CABFB1E728C5"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_UNDEFINED"
+        "OwnerKey" = "8:_AF5539C85560340F9C5AC7ECAAE94340"
         "MsmSig" = "8:_UNDEFINED"
         }
     }
@@ -174,14 +186,14 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
-            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_9D4A4ADA3067077927B2603F919360FE"
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_AF5539C85560340F9C5AC7ECAAE94340"
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
             "AssemblyAsmDisplayName" = "8:AppBars, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL"
                 "ScatterAssemblies"
                 {
-                    "_9D4A4ADA3067077927B2603F919360FE"
+                    "_AF5539C85560340F9C5AC7ECAAE94340"
                     {
                     "Name" = "8:AppBars.dll"
                     "Attributes" = "3:512"
@@ -281,14 +293,14 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:FileDock"
-        "ProductCode" = "8:{5CF7067F-EB2E-47A4-AF3E-6AB77AA69231}"
-        "PackageCode" = "8:{60864EE6-272E-4D17-A790-349DCD4680FD}"
+        "ProductCode" = "8:{B865723F-24AC-4B34-8C49-C24DF313E420}"
+        "PackageCode" = "8:{E7A69EC1-609C-4AE3-84DF-F63E5DC36689}"
         "UpgradeCode" = "8:{FA5CD851-72DD-42AF-84B0-A642DD10538D}"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
-        "DetectNewerInstalledVersion" = "11:TRUE"
+        "DetectNewerInstalledVersion" = "11:FALSE"
         "InstallAllUsers" = "11:FALSE"
-        "ProductVersion" = "8:1.6.1"
+        "ProductVersion" = "8:1.6.6"
         "Manufacturer" = "8:Jesse Dailey"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:"
@@ -800,6 +812,34 @@
         }
         "ProjectOutput"
         {
+            "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_42B1FAEFE7FA4F6189D0CABFB1E728C5"
+            {
+            "SourcePath" = "8:..\\AppBars\\obj\\Release\\AppBars.dll"
+            "TargetName" = "8:"
+            "Tag" = "8:"
+            "Folder" = "8:_A12B7285F5B14FCB936F048F3010C8A5"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            "ProjectOutputGroupRegister" = "3:1"
+            "OutputConfiguration" = "8:"
+            "OutputGroupCanonicalName" = "8:Built"
+            "OutputProjectGuid" = "8:{56912831-06FF-4515-AEC5-CAC61D703CDC}"
+            "ShowKeyOutput" = "11:TRUE"
+                "ExcludeFilters"
+                {
+                }
+            }
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_45C6486FD8234AB9A7663CC7767D21D8"
             {
             "SourcePath" = "8:..\\FileDock\\obj\\Release\\FileDock.exe"
