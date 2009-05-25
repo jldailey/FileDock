@@ -37,11 +37,13 @@ namespace FileDock {
 		}
 		public Dictionary<string, string> savedPaths; // maps drives to the last path we visited on that drive
 
+		private int fileDockCallback;
 		public FileDockForm() {
 			this.DoubleBuffered = true;
 			savedPaths = new Dictionary<string, string>();
 			InitializeComponent();
 			leftChild = null;
+			// fileDockCallback = RegisterWindowMessage("FileDock Message");
 		}
 
 		public FileDockForm(FileDockForm left) {
@@ -49,8 +51,23 @@ namespace FileDock {
 			savedPaths = new Dictionary<string, string>();
 			InitializeComponent();
 			leftChild = left;
+			// fileDockCallback = RegisterWindowMessage("FileDock Message");
 		}
-		
+
+		protected override void WndProc(ref Message m)
+		{
+			if ( false && m.Msg == this.fileDockCallback )
+			{
+				switch ((int)m.WParam)
+				{
+					default:
+						Debug.Print("Ignoring windows message: " + m.ToString());
+						break;
+				}
+			}
+			base.WndProc(ref m);
+		}
+
 		// re-read all the system drives and re-draw the DriveButtons
 		public void refreshDrives() {
 			refreshDrives(true);
@@ -87,7 +104,7 @@ namespace FileDock {
 					}
 					this.listFiles.Focus();
 				};
-				
+
 
 				flowLayoutPanel1.Controls.Add(b);
 				driveCount++;
@@ -107,7 +124,7 @@ namespace FileDock {
 
 		// delegate type used when refreshing the file list asynchronously
 		private delegate void RefreshDelegate();
-				
+
 		// re-read the current directory and fill up the ListView
 		public void refreshFiles(bool allFileDocks) {
 			refreshFiles();
@@ -120,11 +137,28 @@ namespace FileDock {
 		private Semaphore listSem = new Semaphore(1, 1);
 		public void refreshFiles() {
 			try {
-				fileSystemWatcher1.Path = this.currentPath;
+				// try using the current path
+				try {
+					fileSystemWatcher1.Path = this.currentPath;
+				} catch( ArgumentException ex) {
+					// if that fails
+					// and we are looking at some subdirectory on the drive
+					if (this.currentDirectory != "")
+					{
+						// then try looking at the root of the drive
+						this.currentPath = this.currentDrive + ":\\"; // triggers a refresh (and thus recursion)
+					} else { // else we are already looking for the drive root
+						// and its still invalid, so the whole drive is invalid, so fall all the way back to c:\
+						this.currentPath = "C:\\"; // triggers refresh and recursion
+					}
+					refreshDrives();
+					return;
+				}
 				savedPaths[this.currentDrive] = this.currentDirectory;
 
+				// repaint the form
 				this.Refresh();
-			
+
 				// build a new tree asynchronously, so that form can still draw itself while this is updating
 				RefreshDelegate d = new RefreshDelegate(delegate() {
 					try {
@@ -133,6 +167,7 @@ namespace FileDock {
 						listFiles.Items.Clear();
 						int maxLen = 30;
 						listFiles.Columns[0].Text = AbbreviatePath(this.currentPath, maxLen);
+						listFiles.ItemChecked += new ItemCheckedEventHandler(listFiles_ItemChecked);
 
 						ListViewItem tmp = listFiles.Items.Add("..");
 						tmp.Tag = "..";
@@ -174,14 +209,22 @@ namespace FileDock {
 			} catch (UnauthorizedAccessException) {
 				MessageBox.Show("Access denied");
 				this.currentDirectory = "";
-			} catch( ArgumentException ) {
-				MessageBox.Show("Previous directory: " + this.currentDirectory + " is no longer valid.");
-				this.currentPath = "C:\\";
 			} catch (DirectoryNotFoundException) {
 				MessageBox.Show("Directory not found: " + currentPath);
 				this.currentDirectory = "";
+				refreshFiles();
 			} catch (IOException e) {
 				MessageBox.Show("IOError :" + e.ToString());
+			}
+		}
+
+		void listFiles_ItemChecked(object sender, ItemCheckedEventArgs e)
+		{
+			e.Item.Selected = e.Item.Checked;
+			if (listFiles.CheckedIndices.Count == 0
+				&& (FileDockForm.ModifierKeys & Keys.Control ) == 0)
+			{
+				listFiles.CheckBoxes = false;
 			}
 		}
 
@@ -191,7 +234,7 @@ namespace FileDock {
 		public Config config;
 		FileDockForm rightChild;
 		FileDockForm leftChild;
-		
+
 		CreateDirPanel createDirPanel;
 		CreateFilePanel createFilePanel;
 
@@ -202,7 +245,7 @@ namespace FileDock {
 				RegisterAppBar();
 				UnregisterAppBar();
 				RegisterAppBar();
-				this.idealSize = new Size(200, SystemInformation.PrimaryMonitorSize.Height);
+				this.idealSize = new Size(this.Width, SystemInformation.PrimaryMonitorSize.Height);
 				this.idealLocation = new Point(0, 0);
 				this.RefreshPosition();
 			} else if ( this.leftChild != null ) {
@@ -213,19 +256,22 @@ namespace FileDock {
 			base.OnLoad(e);
 			this.DragDrop += new DragEventHandler(FileDockForm_DragDrop);
 			this.DragOver += new DragEventHandler(FileDockForm_DragOver);
-			this.KeyUp += new KeyEventHandler(FileDockForm_KeyUp);
 			this.Enter += new EventHandler(NoFocusAllowed);
 			listFiles.ItemDrag += new ItemDragEventHandler(listFiles_ItemDrag);
 			listFiles.MouseMove += new MouseEventHandler(listFiles_MouseMove);
 			listFiles.MouseLeave += new EventHandler(listFiles_MouseLeave);
-			listFiles.MouseClick += new MouseEventHandler(listFiles_MouseClick);
+			// listFiles.MouseClick += new MouseEventHandler(listFiles_MouseClick);
+			listFiles.ItemActivate += new EventHandler(listFiles_ItemActivate);
 			listFiles.DoubleClick += new EventHandler(listFiles_DoubleClick);
 			listFiles.DragOver += new DragEventHandler(FileDockForm_DragOver);
 			listFiles.DragDrop += new DragEventHandler(FileDockForm_DragDrop);
-			listFiles.KeyUp += new KeyEventHandler(FileDockForm_KeyUp);
-			fileSystemWatcher1.EnableRaisingEvents = false;
-			fileSystemWatcher1.NotifyFilter = NotifyFilters.DirectoryName | NotifyFilters.FileName;
-			fileSystemWatcher1.Filter = "";
+			listFiles.KeyUp += new KeyEventHandler(ListFiles_KeyUp);
+			listFiles.KeyDown += new KeyEventHandler(ListFiles_KeyDown);
+
+			// set up the file system events that will trigger refreshes
+			fileSystemWatcher1.EnableRaisingEvents = false; // dont start responding yet, until all config is done
+			fileSystemWatcher1.NotifyFilter = NotifyFilters.DirectoryName | NotifyFilters.FileName; // notify about directories as well as files
+			fileSystemWatcher1.Filter = ""; // all files
 			fileSystemWatcher1.Created += new FileSystemEventHandler(delegate(object source, FileSystemEventArgs ev) {
 				Debug.Print("Created "+ev.Name);
 				refreshFiles();
@@ -238,10 +284,10 @@ namespace FileDock {
 				refreshFiles();
 				Debug.Print("Renamed: "+ev.OldName+" "+ev.Name);
 			});
-			
+
 			// set double-buffering options
 			this.SetExStyles();
-			
+
 			this.searchPanel = new SearchPanel(this);
 			this.searchPanel.Location = new Point(flowLayoutPanel1.Left, listFiles.Top);
 			this.searchPanel.Hide();
@@ -272,7 +318,7 @@ namespace FileDock {
 				ev.Graphics.DrawString(text,this.listFiles.Font, Brushes.Black, ev.Bounds.X+1, ev.Bounds.Y+3);
 			});
 			this.favPanel.listFavs.MeasureItem += new MeasureItemEventHandler(delegate(object sender, MeasureItemEventArgs ev) {	});
-			
+
 			this.Controls.Add(this.favPanel);
 
 			this.createDirPanel = new CreateDirPanel(this);
@@ -347,7 +393,7 @@ namespace FileDock {
 
 
 			this.hoveredItem = null;
-			
+
 			refreshDrives();
 			refreshFiles();
 			this.listFiles.Focus();
@@ -432,7 +478,7 @@ namespace FileDock {
 		}
 		#endregion
 
-		void FileDockForm_KeyUp(object sender, KeyEventArgs e) {
+		void ListFiles_KeyUp(object sender, KeyEventArgs e) {
 			Debug.Print("keyUp: " + e.KeyCode.ToString());
 			switch ( e.KeyCode ) {
 				case Keys.OemQuestion:
@@ -441,8 +487,25 @@ namespace FileDock {
 				case Keys.F5:
 					refresh_Click(null, null);
 					break;
+				case Keys.ControlKey:
+					if (listFiles.CheckedIndices.Count == 0)
+					{
+						listFiles.CheckBoxes = false;
+					}
+					break;
 			}
 
+		}
+
+		void ListFiles_KeyDown(object sender, KeyEventArgs e)
+		{
+			Debug.Print("keyDown: " + e.KeyCode.ToString());
+			switch (e.KeyCode)
+			{
+				case Keys.ControlKey:
+					listFiles.CheckBoxes = true;
+					break;
+			}
 		}
 
 		private void listFiles_DoubleClick(object sender, EventArgs e) {
@@ -456,6 +519,11 @@ namespace FileDock {
 					activateFileFolder(hoveredItem);
 				}
 			}
+		}
+
+		void listFiles_ItemActivate(object sender, EventArgs e)
+		{
+			activateFileFolder(listFiles.FocusedItem);
 		}
 
 		private void listFiles_MouseClick(object sender, MouseEventArgs e) {
@@ -479,14 +547,15 @@ namespace FileDock {
 				}
 				prevHoveredItem = hoveredItem;
 				hoveredItem = newHoveredItem;
+				SendMessage(this.Handle, 0x086, 1, 0); // force focus
 				if ( hoveredTip != null ) {
 					hoveredTip.Hide(listFiles);
 					hoveredTip.Dispose();
 					hoveredTip = null;
 				}
-				hoveredTip = new ToolTip();
+				hoveredTip = new ToolTip(this.components);
 				Point hoverPos = this.PointToClient(e.Location);
-				hoverPos = new Point(hoverPos.X + this.Left + 15, hoverPos.Y + 10);
+				hoverPos = new Point(hoverPos.X + this.Left + 35 , hoverPos.Y );
 				string hoverText = hoveredItem.Text;
 				try {
 					string fname = (string)hoveredItem.Tag;
@@ -509,13 +578,14 @@ namespace FileDock {
 		}
 
 		void listFiles_MouseLeave(object sender, EventArgs e) {
+			Debug.Print("closing hoveredTip on mouse leave");
 			if ( hoveredTip != null ) {
 				hoveredTip.Hide(listFiles);
 				hoveredTip.Dispose();
 				hoveredTip = null;
 			}
 		}
-		
+
 		// when an item is first picked up:
 		private void listFiles_ItemDrag(object sender, ItemDragEventArgs e) {
 			ListViewItem node = (ListViewItem)e.Item;
@@ -535,7 +605,7 @@ namespace FileDock {
 				listFiles.DoDragDrop(data, DragDropEffects.Copy | DragDropEffects.Move | DragDropEffects.Link | DragDropEffects.All | DragDropEffects.None );
 			}
 		}
-		
+
 		// when an item is being floated over any part of the form
 		private void FileDockForm_DragOver(object sender, DragEventArgs e) {
 			bool CtrlPressed = (FileDockForm.ModifierKeys & Keys.Control) == Keys.Control;
@@ -552,7 +622,7 @@ namespace FileDock {
 				e.Effect = DragDropEffects.None;
 			}
 		}
-		
+
 		// when an item is actually dropped on some part of the form
 		private void FileDockForm_DragDrop(object sender, DragEventArgs e) {
 			Debug.Print("DragDrop: " + sender.ToString() + " " + e.ToString());
@@ -659,11 +729,9 @@ namespace FileDock {
 				}
 			}
 		}
-		
+
 		// a helper, since for some reason this is missing from the windows apis
 		private void copyDirectory(string Src, string Dst) {
-			MessageBox.Show("TODO");
-			return;
 			String[] Files;
 			if (Dst[Dst.Length - 1] != Path.DirectorySeparatorChar)
 				Dst += Path.DirectorySeparatorChar;
@@ -739,7 +807,7 @@ namespace FileDock {
 				{
 					SizeF size = e.Graphics.MeasureString(node.Text, floater.Font);
 					floater.Size = new Size((int)(size.Width + 1), (int)(floater.Font.Size * 1.3) + 7);
-					//e.Graphics.FillRectangle(new SolidBrush(Color.LightBlue),floater.Left,floater.Top,floater.Width,floater.Height);
+					e.Graphics.FillRectangle(new SolidBrush(Color.LightBlue),floater.Left,floater.Top,floater.Width,floater.Height);
 					e.Graphics.DrawString(node.Text, floater.Font, new SolidBrush(Color.Black), new Point(0, 0));
 				});
 				floater.Show(this);
@@ -769,12 +837,12 @@ namespace FileDock {
 				refreshFiles();
 			}
 		}
-		
+
 		// launch a file using the 'start' command-line tool to do the registry/mime lookup
 		private void startFileWithDefaultHandler(string filename) {
 			execCmd(@"C:\WINDOWS\System32\cmd.exe", "/c start \"start\" \"" + (filename) + "\"", null, true);
 		}
-		
+
 		// execute something in windows
 		private void execCmd(string cmd, string arguments, string workingDirectory, bool hidden) {
 			ProcessStartInfo si = new ProcessStartInfo(cmd);
@@ -792,7 +860,7 @@ namespace FileDock {
 			System.Diagnostics.Process.Start(si);
 			Debug.Print("Exec returned");
 		}
-		
+
 		// the search button
 		public void search_Click(object sender, EventArgs e) {
 			searchPanel.Toggle();
@@ -855,12 +923,14 @@ namespace FileDock {
 			refreshDrives(false);
 			refreshFiles();
 		}
-		
+
 		// the close button
 		private void close_Click(object sender, EventArgs e) {
+			fileSystemWatcher1.Dispose();
+			fileSystemWatcher1 = null;
 			this.Close();
 		}
-		
+
 		// the clone button
 		protected void clone_Click(object sender, EventArgs e) {
 			// if we already have a right child
@@ -936,7 +1006,7 @@ namespace FileDock {
 				e.Effect = DragDropEffects.None;
 			}
 		}
-		
+
 		// the delete button (and its droppable effects)
 		private void delete_Click(object sender, EventArgs e) {
 			MessageBox.Show("Drop files here to delete them.");
@@ -956,7 +1026,7 @@ namespace FileDock {
 				bool isStringDrop = e.Data.GetDataPresent(DataFormats.Text);
 				if (isFileDrop) {
 					string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
-					
+
 					if (MessageBox.Show("Are you sure you want to delete:\n " + String.Join("\n",files), "Confirm Delete", MessageBoxButtons.YesNo) == DialogResult.Yes) {
 						foreach (string srcFile in files) {
 							deleteFileOrDirectory(srcFile);
@@ -1000,7 +1070,7 @@ namespace FileDock {
 				}
 			}
 		}
-		
+
 		// the config/options button
 		private void config_Click(object sender, EventArgs e) {
 			if (configForm.Visible) {
@@ -1015,7 +1085,7 @@ namespace FileDock {
 				configForm.Focus();
 			}
 		}
-		
+
 		public void refreshAllInstances() {
 			refresh_Click(null, null);
 			FileDockForm cursor = this.leftChild;
@@ -1030,6 +1100,35 @@ namespace FileDock {
 				cursor.refresh_Click(null, null);
 				cursor = cursor.rightChild;
 			}
+		}
+
+		private void vim_DragDrop(object sender, DragEventArgs e) {
+			if ( e.Effect == DragDropEffects.All ) {
+				bool isFileDrop = e.Data.GetDataPresent(DataFormats.FileDrop);
+				bool isStringDrop = e.Data.GetDataPresent(DataFormats.Text);
+				if ( isFileDrop ) {
+					foreach ( string srcFile in (string[])e.Data.GetData(DataFormats.FileDrop) ) {
+						execCmd(@"C:\Program Files\Vim\vim72\gvim.exe", "--remote-tab-silent \"" + srcFile + "\"", this.currentPath, false);
+					}
+				} else if ( isStringDrop ) {
+					string srcFile = (string)e.Data.GetData(DataFormats.Text);
+					execCmd(@"C:\Program Files\Vim\vim72\gvim.exe", "--remote-tab-silent \"" + srcFile + "\"", this.currentPath, false);
+				}
+			} else {
+				MessageBox.Show("Drop of unknown effect.");
+			}
+		}
+		private void vim_DragEnter(object sender, DragEventArgs e) {
+			bool isFileDrop = e.Data.GetDataPresent(DataFormats.FileDrop);
+			bool isStringDrop = e.Data.GetDataPresent(DataFormats.Text);
+			if (isFileDrop || isStringDrop) {
+				e.Effect = DragDropEffects.All;
+			} else {
+				e.Effect = DragDropEffects.None;
+			}
+		}
+		private void vim_Click(object sender, EventArgs e) {
+			execCmd(@"C:\Program Files\Vim\vim72\gvim.exe", "--remote-tab-silent \"newfile\"", this.currentPath, false);
 		}
 
 		public int InstanceIndex;
@@ -1060,7 +1159,7 @@ namespace FileDock {
 			string ret = "";
 			if ( path.Length > maxLen ) {
 				string[] elems = path.Split('\\');
-				
+
 				maxLen -= 10; // reserve a minimum 10 chars for the lead-in we will add later
 				int loadIndex = 1;
 				string last = elems[elems.Length - loadIndex];
