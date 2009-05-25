@@ -60,6 +60,13 @@ namespace FileDock.Properties {
             }
         }
         
+        internal static System.Drawing.Bitmap gvim_IDR_VIM {
+            get {
+                object obj = ResourceManager.GetObject("gvim_IDR_VIM", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
         internal static System.Drawing.Bitmap SHELL32_10 {
             get {
                 object obj = ResourceManager.GetObject("SHELL32_10", resourceCulture);

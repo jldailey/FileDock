@@ -142,14 +142,17 @@
   <data name="SHELL32_144" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\SHELL32_144.ico;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="SHELL32_290" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\SHELL32_290.ico;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="shell32_186" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\shell32_186.ico;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="shell32_319" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\shell32_319.ico;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="shell32_44" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\shell32_44.ico;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="shell32_319" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\shell32_319.ico;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="SHELL32_290" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\SHELL32_290.ico;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="SHELL32_9" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\SHELL32_9.ico;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
@@ -169,7 +172,7 @@
   <data name="xpsp2res_900" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\xpsp2res_900.ico;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="shell32_186" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\shell32_186.ico;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="gvim_IDR_VIM" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\gvim_IDR_VIM.ico;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
 </root>

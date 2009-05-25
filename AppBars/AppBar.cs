@@ -65,6 +65,9 @@ namespace FileDock
 			} else if ( m.Msg == (int)WindowsMessages.WM_ACTIVATE ) {
 				Debug.Print(m.ToString());
 				AppBar.ActivateAppBar(this.Handle);
+			} else if ( m.Msg == (int)WindowsMessages.WM_ACTIVATEAPP ) {
+				Debug.Print(m.ToString());
+				AppBar.ActivateAppBar(this.Handle);
 			} else if ( m.Msg == (int)WindowsMessages.WM_WINDOWPOSCHANGED) {
 				WINDOWPOS pos = (WINDOWPOS)Marshal.PtrToStructure(m.LParam,typeof(WINDOWPOS));
 				WindowPosChanged(this.Handle);
