@@ -174,9 +174,11 @@ namespace FileDock {
 						tmp.Group = listFiles.Groups[0];
 						string[] dirs = Directory.GetDirectories(currentPath);
 						Array.Sort<string>(dirs);
+						List<string> ignore = new List<string>(this.config["IgnoreFiles"].Split(','));
 						foreach ( string dir in dirs ) {
-							ListViewItem node = listFiles.Items.Add(Path.GetFileName(dir));
-							node.ToolTipText = Path.GetFileName(dir);
+							string fname = Path.GetFileName(dir);
+							ListViewItem node = listFiles.Items.Add(fname);
+							node.ToolTipText = fname;
 							node.Tag = Path.GetFullPath(dir);
 							node.ImageIndex = 0;
 							node.Group = listFiles.Groups[0];
@@ -184,6 +186,11 @@ namespace FileDock {
 						string[] files = Directory.GetFiles(currentPath, "*.*");
 						Array.Sort<string>(files);
 						foreach ( string file in files ) {
+							// check the ignore list
+							string ext = Path.GetExtension(file);
+							if( ignore.Contains(ext) )
+								continue;
+							// check for hidden files
 							if ( this.config["ShowHidden"] == "False" ) {
 								FileInfo inf = new FileInfo(file);
 								if ( (inf.Attributes & FileAttributes.Hidden) == FileAttributes.Hidden ) {
@@ -221,7 +228,8 @@ namespace FileDock {
 		void listFiles_ItemChecked(object sender, ItemCheckedEventArgs e)
 		{
 			e.Item.Selected = e.Item.Checked;
-			if (listFiles.CheckedIndices.Count == 0
+			Debug.Print("Checked items: " + listFiles.CheckedItems.Count.ToString());
+			if (listFiles.CheckedItems.Count == 0
 				&& (FileDockForm.ModifierKeys & Keys.Control ) == 0)
 			{
 				listFiles.CheckBoxes = false;
@@ -260,8 +268,8 @@ namespace FileDock {
 			listFiles.ItemDrag += new ItemDragEventHandler(listFiles_ItemDrag);
 			listFiles.MouseMove += new MouseEventHandler(listFiles_MouseMove);
 			listFiles.MouseLeave += new EventHandler(listFiles_MouseLeave);
-			// listFiles.MouseClick += new MouseEventHandler(listFiles_MouseClick);
-			listFiles.ItemActivate += new EventHandler(listFiles_ItemActivate);
+			listFiles.MouseClick += new MouseEventHandler(listFiles_MouseClick);
+			//listFiles.ItemActivate += new EventHandler(listFiles_ItemActivate);
 			listFiles.DoubleClick += new EventHandler(listFiles_DoubleClick);
 			listFiles.DragOver += new DragEventHandler(FileDockForm_DragOver);
 			listFiles.DragDrop += new DragEventHandler(FileDockForm_DragDrop);
@@ -342,6 +350,7 @@ namespace FileDock {
 			this.config["CurrentDrive"] = "C";
 			this.config["SavedPathsMap"] = "";
 			this.config["Favorites"] = "";
+			this.config["IgnoreFiles"] = "";
 
 			// load any saved values from the registry, overwriting the defaults
 			this.config.LoadFromRegistry();
@@ -499,7 +508,7 @@ namespace FileDock {
 
 		void ListFiles_KeyDown(object sender, KeyEventArgs e)
 		{
-			Debug.Print("keyDown: " + e.KeyCode.ToString());
+			// Debug.Print("keyDown: " + e.KeyCode.ToString());
 			switch (e.KeyCode)
 			{
 				case Keys.ControlKey:
@@ -531,7 +540,10 @@ namespace FileDock {
 					&& (FileDockForm.ModifierKeys & Keys.Shift) == 0
 					) {
 				if ( hoveredItem != null && config["SingleClick"] == "True" ) {
-					activateFileFolder(hoveredItem);
+					if (listFiles.CheckBoxes && listFiles.CheckedItems.Contains(hoveredItem))
+						return;
+					else
+						activateFileFolder(hoveredItem);
 				}
 			}
 		}
