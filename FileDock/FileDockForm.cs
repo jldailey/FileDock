@@ -135,19 +135,29 @@ namespace FileDock {
 			}
 		}
 		private Semaphore listSem = new Semaphore(1, 1);
+		private bool isRefreshing = false;
 		public void refreshFiles() {
-			try {
+			if (isRefreshing) 
+				return;
+			isRefreshing = true;
+			try
+			{
 				// try using the current path
-				try {
+				try
+				{
 					fileSystemWatcher1.Path = this.currentPath;
-				} catch( ArgumentException ex) {
+				}
+				catch (ArgumentException ex)
+				{
 					// if that fails
 					// and we are looking at some subdirectory on the drive
 					if (this.currentDirectory != "")
 					{
 						// then try looking at the root of the drive
 						this.currentPath = this.currentDrive + ":\\"; // triggers a refresh (and thus recursion)
-					} else { // else we are already looking for the drive root
+					}
+					else
+					{ // else we are already looking for the drive root
 						// and its still invalid, so the whole drive is invalid, so fall all the way back to c:\
 						this.currentPath = "C:\\"; // triggers refresh and recursion
 					}
@@ -160,8 +170,10 @@ namespace FileDock {
 				this.Refresh();
 
 				// build a new tree asynchronously, so that form can still draw itself while this is updating
-				RefreshDelegate d = new RefreshDelegate(delegate() {
-					try {
+				RefreshDelegate d = new RefreshDelegate(delegate()
+				{
+					try
+					{
 						listSem.WaitOne();
 						fileSystemWatcher1.EnableRaisingEvents = false;
 						listFiles.Items.Clear();
@@ -175,7 +187,8 @@ namespace FileDock {
 						string[] dirs = Directory.GetDirectories(currentPath);
 						Array.Sort<string>(dirs);
 						List<string> ignore = new List<string>(this.config["IgnoreFiles"].Split(','));
-						foreach ( string dir in dirs ) {
+						foreach (string dir in dirs)
+						{
 							string fname = Path.GetFileName(dir);
 							ListViewItem node = listFiles.Items.Add(fname);
 							node.ToolTipText = fname;
@@ -185,15 +198,18 @@ namespace FileDock {
 						}
 						string[] files = Directory.GetFiles(currentPath, "*.*");
 						Array.Sort<string>(files);
-						foreach ( string file in files ) {
+						foreach (string file in files)
+						{
 							// check the ignore list
 							string ext = Path.GetExtension(file);
-							if( ignore.Contains(ext) )
+							if (ignore.Contains(ext))
 								continue;
 							// check for hidden files
-							if ( this.config["ShowHidden"] == "False" ) {
+							if (this.config["ShowHidden"] == "False")
+							{
 								FileInfo inf = new FileInfo(file);
-								if ( (inf.Attributes & FileAttributes.Hidden) == FileAttributes.Hidden ) {
+								if ((inf.Attributes & FileAttributes.Hidden) == FileAttributes.Hidden)
+								{
 									continue;
 								}
 							}
@@ -204,24 +220,38 @@ namespace FileDock {
 							node.Group = listFiles.Groups[1];
 						}
 						fileSystemWatcher1.EnableRaisingEvents = true;
-					} catch ( Exception e ) {
+					}
+					catch (Exception e)
+					{
 						MessageBox.Show("Exception: " + e.ToString());
-					} finally {
+					}
+					finally
+					{
 						listSem.Release();
 					}
 				});
 				// begin the async build above
 				IAsyncResult res = listFiles.BeginInvoke(d);
 
-			} catch (UnauthorizedAccessException) {
+			}
+			catch (UnauthorizedAccessException)
+			{
 				MessageBox.Show("Access denied");
 				this.currentDirectory = "";
-			} catch (DirectoryNotFoundException) {
+			}
+			catch (DirectoryNotFoundException)
+			{
 				MessageBox.Show("Directory not found: " + currentPath);
 				this.currentDirectory = "";
 				refreshFiles();
-			} catch (IOException e) {
+			}
+			catch (IOException e)
+			{
 				MessageBox.Show("IOError :" + e.ToString());
+			}
+			finally
+			{
+				isRefreshing = false;
 			}
 		}
 
@@ -250,6 +280,7 @@ namespace FileDock {
 
 		protected override void OnLoad(EventArgs e) {
 			if ( dockOnLoad ) {
+				// make sure to clean up after any thing that failed to unregister before
 				RegisterAppBar();
 				UnregisterAppBar();
 				RegisterAppBar();
@@ -325,7 +356,7 @@ namespace FileDock {
 				string text = AbbreviatePath(this.favPanel.listFavs.Items[ev.Index].ToString(), this.listFiles.Font, ev.Bounds.Width);
 				ev.Graphics.DrawString(text,this.listFiles.Font, Brushes.Black, ev.Bounds.X+1, ev.Bounds.Y+3);
 			});
-			this.favPanel.listFavs.MeasureItem += new MeasureItemEventHandler(delegate(object sender, MeasureItemEventArgs ev) {	});
+			// this.favPanel.listFavs.MeasureItem += new MeasureItemEventHandler(delegate(object sender, MeasureItemEventArgs ev) {	});
 
 			this.Controls.Add(this.favPanel);
 
@@ -341,7 +372,7 @@ namespace FileDock {
 
 			this.InstanceIndex = this.getInstanceIndex();
 
-			this.configForm = new ConfigForm();
+			this.configForm = new ConfigForm(this);
 			this.config = new Config(this.configForm, "FileDock\\Instance"+this.InstanceIndex);
 
 			// set some default config values
@@ -351,6 +382,7 @@ namespace FileDock {
 			this.config["SavedPathsMap"] = "";
 			this.config["Favorites"] = "";
 			this.config["IgnoreFiles"] = "";
+			this.config["VimLocation"] = @"C:\Program Files\Vim\vim72\gvim.exe";
 
 			// load any saved values from the registry, overwriting the defaults
 			this.config.LoadFromRegistry();
@@ -574,9 +606,9 @@ namespace FileDock {
 					FileInfo f = new FileInfo(fname);
 					double kb = f.Length / 1024.0;
 					hoverText += String.Format("\n- {0:0,0.00} kb", kb);
+					hoveredTip.Show(hoverText, listFiles, hoverPos);
 				} catch ( FileNotFoundException ) {
 				}
-				hoveredTip.Show(hoverText, listFiles, hoverPos);
 			}
 			//Debug.Print("Hovered: " + hoveredItem.Text + " prevHovered: " + (prevHoveredItem != null ? prevHoveredItem.Text : "null"));
 			if (prevHoveredItem != null) {
@@ -1091,7 +1123,7 @@ namespace FileDock {
 				configForm.Show(this);
 				configForm.Focus();
 			} else {
-				configForm = new ConfigForm();
+				configForm = new ConfigForm(this);
 				config.UpdateFormBinding(configForm);
 				configForm.Show(this);
 				configForm.Focus();
@@ -1120,11 +1152,11 @@ namespace FileDock {
 				bool isStringDrop = e.Data.GetDataPresent(DataFormats.Text);
 				if ( isFileDrop ) {
 					foreach ( string srcFile in (string[])e.Data.GetData(DataFormats.FileDrop) ) {
-						execCmd(@"C:\Program Files\Vim\vim72\gvim.exe", "--remote-tab-silent \"" + srcFile + "\"", this.currentPath, false);
+						execCmd(this.config["VimLocation"], "--remote-tab-silent \"" + srcFile + "\"", this.currentPath, false);
 					}
 				} else if ( isStringDrop ) {
 					string srcFile = (string)e.Data.GetData(DataFormats.Text);
-					execCmd(@"C:\Program Files\Vim\vim72\gvim.exe", "--remote-tab-silent \"" + srcFile + "\"", this.currentPath, false);
+					execCmd(this.config["VimLocation"], "--remote-tab-silent \"" + srcFile + "\"", this.currentPath, false);
 				}
 			} else {
 				MessageBox.Show("Drop of unknown effect.");
@@ -1140,7 +1172,7 @@ namespace FileDock {
 			}
 		}
 		private void vim_Click(object sender, EventArgs e) {
-			execCmd(@"C:\Program Files\Vim\vim72\gvim.exe", "--remote-tab-silent \"newfile\"", this.currentPath, false);
+			execCmd(this.config["VimLocation"], "--remote-tab-silent \"newfile\"", this.currentPath, false);
 		}
 
 		public int InstanceIndex;

@@ -26,12 +26,17 @@ namespace FileDock {
 			this.checkBox1 = new System.Windows.Forms.CheckBox();
 			this.checkBox2 = new System.Windows.Forms.CheckBox();
 			this.groupBox1 = new System.Windows.Forms.GroupBox();
-			this.listIgnore = new System.Windows.Forms.ListBox();
-			this.txtAddIgnore = new System.Windows.Forms.TextBox();
-			this.label1 = new System.Windows.Forms.Label();
-			this.btnAddIgnore = new System.Windows.Forms.Button();
 			this.btnRemoveIgnore = new System.Windows.Forms.Button();
+			this.btnAddIgnore = new System.Windows.Forms.Button();
+			this.label1 = new System.Windows.Forms.Label();
+			this.txtAddIgnore = new System.Windows.Forms.TextBox();
+			this.listIgnore = new System.Windows.Forms.ListBox();
+			this.button11 = new System.Windows.Forms.Button();
+			this.groupBox2 = new System.Windows.Forms.GroupBox();
+			this.txtEditVimLocation = new System.Windows.Forms.TextBox();
+			this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
 			this.groupBox1.SuspendLayout();
+			this.groupBox2.SuspendLayout();
 			this.SuspendLayout();
 			// 
 			// checkBox1
@@ -68,42 +73,7 @@ namespace FileDock {
 			this.groupBox1.Size = new System.Drawing.Size(200, 120);
 			this.groupBox1.TabIndex = 3;
 			this.groupBox1.TabStop = false;
-			this.groupBox1.Text = "Ignore Files";
-			// 
-			// listIgnore
-			// 
-			this.listIgnore.FormattingEnabled = true;
-			this.listIgnore.Location = new System.Drawing.Point(7, 20);
-			this.listIgnore.Name = "listIgnore";
-			this.listIgnore.Size = new System.Drawing.Size(107, 69);
-			this.listIgnore.TabIndex = 0;
-			this.listIgnore.Tag = "IgnoreFiles";
-			// 
-			// txtAddIgnore
-			// 
-			this.txtAddIgnore.Location = new System.Drawing.Point(121, 37);
-			this.txtAddIgnore.Name = "txtAddIgnore";
-			this.txtAddIgnore.Size = new System.Drawing.Size(73, 20);
-			this.txtAddIgnore.TabIndex = 1;
-			// 
-			// label1
-			// 
-			this.label1.AutoSize = true;
-			this.label1.Location = new System.Drawing.Point(118, 20);
-			this.label1.Name = "label1";
-			this.label1.Size = new System.Drawing.Size(56, 13);
-			this.label1.TabIndex = 2;
-			this.label1.Text = "Extension:";
-			// 
-			// btnAddIgnore
-			// 
-			this.btnAddIgnore.Location = new System.Drawing.Point(121, 63);
-			this.btnAddIgnore.Name = "btnAddIgnore";
-			this.btnAddIgnore.Size = new System.Drawing.Size(73, 23);
-			this.btnAddIgnore.TabIndex = 3;
-			this.btnAddIgnore.Text = "Add";
-			this.btnAddIgnore.UseVisualStyleBackColor = true;
-			this.btnAddIgnore.Click += new System.EventHandler(this.btnAddIgnore_Click);
+			this.groupBox1.Text = "Ignore File Types";
 			// 
 			// btnRemoveIgnore
 			// 
@@ -115,18 +85,96 @@ namespace FileDock {
 			this.btnRemoveIgnore.UseVisualStyleBackColor = true;
 			this.btnRemoveIgnore.Click += new System.EventHandler(this.btnRemoveIgnore_Click);
 			// 
+			// btnAddIgnore
+			// 
+			this.btnAddIgnore.Location = new System.Drawing.Point(121, 63);
+			this.btnAddIgnore.Name = "btnAddIgnore";
+			this.btnAddIgnore.Size = new System.Drawing.Size(73, 23);
+			this.btnAddIgnore.TabIndex = 6;
+			this.btnAddIgnore.Text = "Add";
+			this.btnAddIgnore.UseVisualStyleBackColor = true;
+			this.btnAddIgnore.Click += new System.EventHandler(this.btnAddIgnore_Click);
+			// 
+			// label1
+			// 
+			this.label1.AutoSize = true;
+			this.label1.Location = new System.Drawing.Point(118, 20);
+			this.label1.Name = "label1";
+			this.label1.Size = new System.Drawing.Size(56, 13);
+			this.label1.TabIndex = 2;
+			this.label1.Text = "Extension:";
+			// 
+			// txtAddIgnore
+			// 
+			this.txtAddIgnore.Location = new System.Drawing.Point(121, 37);
+			this.txtAddIgnore.Name = "txtAddIgnore";
+			this.txtAddIgnore.Size = new System.Drawing.Size(73, 20);
+			this.txtAddIgnore.TabIndex = 5;
+			// 
+			// listIgnore
+			// 
+			this.listIgnore.FormattingEnabled = true;
+			this.listIgnore.Location = new System.Drawing.Point(7, 20);
+			this.listIgnore.Name = "listIgnore";
+			this.listIgnore.Size = new System.Drawing.Size(107, 69);
+			this.listIgnore.TabIndex = 3;
+			this.listIgnore.Tag = "IgnoreFiles";
+			// 
+			// button11
+			// 
+			this.button11.AllowDrop = true;
+			this.button11.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.button11.BackgroundImage = global::FileDock.Properties.Resources.gvim_IDR_VIM;
+			this.button11.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
+			this.button11.FlatAppearance.BorderSize = 0;
+			this.button11.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+			this.button11.Location = new System.Drawing.Point(7, 16);
+			this.button11.Name = "button11";
+			this.button11.Padding = new System.Windows.Forms.Padding(4);
+			this.button11.Size = new System.Drawing.Size(24, 24);
+			this.button11.TabIndex = 7;
+			this.button11.UseVisualStyleBackColor = true;
+			this.button11.Click += new System.EventHandler(this.btnEditVimLocation_Click);
+			// 
+			// groupBox2
+			// 
+			this.groupBox2.Controls.Add(this.txtEditVimLocation);
+			this.groupBox2.Controls.Add(this.button11);
+			this.groupBox2.Location = new System.Drawing.Point(12, 185);
+			this.groupBox2.Name = "groupBox2";
+			this.groupBox2.Size = new System.Drawing.Size(200, 49);
+			this.groupBox2.TabIndex = 23;
+			this.groupBox2.TabStop = false;
+			this.groupBox2.Text = "Vim Location";
+			// 
+			// txtEditVimLocation
+			// 
+			this.txtEditVimLocation.Location = new System.Drawing.Point(37, 19);
+			this.txtEditVimLocation.Name = "txtEditVimLocation";
+			this.txtEditVimLocation.Size = new System.Drawing.Size(157, 20);
+			this.txtEditVimLocation.TabIndex = 22;
+			this.txtEditVimLocation.TabStop = false;
+			this.txtEditVimLocation.Tag = "VimLocation";
+			// 
+			// openFileDialog1
+			// 
+			this.openFileDialog1.FileName = "openFileDialog1";
+			// 
 			// ConfigForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(222, 210);
+			this.ClientSize = new System.Drawing.Size(222, 238);
+			this.Controls.Add(this.groupBox2);
 			this.Controls.Add(this.groupBox1);
 			this.Controls.Add(this.checkBox2);
 			this.Controls.Add(this.checkBox1);
 			this.Name = "ConfigForm";
-			this.Text = "Options";
+			this.Text = "Configuration";
 			this.groupBox1.ResumeLayout(false);
 			this.groupBox1.PerformLayout();
+			this.groupBox2.ResumeLayout(false);
+			this.groupBox2.PerformLayout();
 			this.ResumeLayout(false);
 			this.PerformLayout();
 
@@ -142,6 +190,10 @@ namespace FileDock {
 		private System.Windows.Forms.TextBox txtAddIgnore;
 		private System.Windows.Forms.ListBox listIgnore;
 		private System.Windows.Forms.Button btnRemoveIgnore;
+		private System.Windows.Forms.Button button11;
+		private System.Windows.Forms.GroupBox groupBox2;
+		private System.Windows.Forms.OpenFileDialog openFileDialog1;
+		private System.Windows.Forms.TextBox txtEditVimLocation;
 
 	}
 }

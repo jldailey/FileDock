@@ -8,8 +8,15 @@ using System.Windows.Forms;
 
 namespace FileDock {
 	public partial class ConfigForm : Form {
-		public ConfigForm() {
+		private FileDockForm parent;
+		public ConfigForm(FileDockForm parent) {
+			this.parent = parent;
 			InitializeComponent();
+		}
+
+		protected override void OnClosing(CancelEventArgs e)
+		{
+			base.OnClosing(e);
 		}
 
 		private void btnAddIgnore_Click(object sender, EventArgs e)
@@ -47,6 +54,18 @@ namespace FileDock {
 			{
 				listIgnore.Items.RemoveAt(listIgnore.SelectedIndex);
 			}
+		}
+
+		private void btnEditVimLocation_Click(object sender, EventArgs e)
+		{
+			openFileDialog1.FileName = "gvim.exe";
+			openFileDialog1.FileOk += new CancelEventHandler(openFileDialog1_FileOk);
+			openFileDialog1.ShowDialog(this);
+		}
+
+		void openFileDialog1_FileOk(object sender, CancelEventArgs e)
+		{
+			txtEditVimLocation.Text = openFileDialog1.FileName;
 		}
 	}
 }

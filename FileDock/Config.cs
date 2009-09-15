@@ -22,8 +22,18 @@ namespace FileDock {
 			this.appName = appName;
 			mapStrings = new Dictionary<string, string>();
 			mapControls = new Dictionary<string, Control>();
-			srcForm = F;
-			RefreshControlHash(F);
+			F.FormClosing += new FormClosingEventHandler(F_FormClosing);
+			UpdateFormBinding(F);
+		}
+
+		void F_FormClosing(object sender, FormClosingEventArgs e)
+		{
+			// if the form is about to close, save all the values in the mapped controls into the string value cache
+			foreach (string key in mapControls.Keys)
+			{
+				mapStrings[key] = GetControlValue(mapControls[key]);
+			}
+			mapControls.Clear();
 		}
 
 		/// <summary>
@@ -102,10 +112,10 @@ namespace FileDock {
 		/// </summary>
 		/// <param name="newForm"></param>
 		/// <returns></returns>
-		public void UpdateFormBinding(Form newForm) {
+		public string UpdateFormBinding(Form newForm) {
 			mapControls.Clear();
 			srcForm = newForm;
-			RefreshControlHash(newForm);
+			return RefreshControlHash(newForm);
 		}
 
 
