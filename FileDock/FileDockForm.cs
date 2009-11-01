@@ -1152,11 +1152,11 @@ namespace FileDock {
 				bool isStringDrop = e.Data.GetDataPresent(DataFormats.Text);
 				if ( isFileDrop ) {
 					foreach ( string srcFile in (string[])e.Data.GetData(DataFormats.FileDrop) ) {
-						execCmd(this.config["VimLocation"], "--remote-tab-silent \"" + srcFile + "\"", this.currentPath, false);
+						EditFile(srcFile);
 					}
 				} else if ( isStringDrop ) {
 					string srcFile = (string)e.Data.GetData(DataFormats.Text);
-					execCmd(this.config["VimLocation"], "--remote-tab-silent \"" + srcFile + "\"", this.currentPath, false);
+					EditFile(srcFile);
 				}
 			} else {
 				MessageBox.Show("Drop of unknown effect.");
@@ -1172,7 +1172,19 @@ namespace FileDock {
 			}
 		}
 		private void vim_Click(object sender, EventArgs e) {
-			execCmd(this.config["VimLocation"], "--remote-tab-silent \"newfile\"", this.currentPath, false);
+			EditFile("newfile");
+		}
+
+		private void EditFile(string file)
+		{
+			try
+			{
+				execCmd(this.config["VimLocation"], "--remote-tab-silent \"" + file + "\"", this.currentPath, false);
+			}
+			catch (Exception ex)
+			{
+				MessageBox.Show("Failed to launch VIM: " + ex.ToString());
+			}
 		}
 
 		public int InstanceIndex;
