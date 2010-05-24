@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Windows.Forms;
 using Microsoft.Win32;
+using System.Diagnostics;
 
 
 namespace FileDock {
@@ -28,10 +29,12 @@ namespace FileDock {
 
 		void F_FormClosing(object sender, FormClosingEventArgs e)
 		{
+			Debug.Print("Config: closing form...");
 			// if the form is about to close, save all the values in the mapped controls into the string value cache
 			foreach (string key in mapControls.Keys)
 			{
 				mapStrings[key] = GetControlValue(mapControls[key]);
+				Debug.Print("Config: setting {0} to {1}", key, mapStrings[key]);
 			}
 			mapControls.Clear();
 		}
@@ -46,6 +49,7 @@ namespace FileDock {
 		}
 
 		public void SaveToRegistry() {
+			Debug.Print("Config: saving to registry...");
 			RegistryKey regKey = Registry.CurrentUser.OpenSubKey("Software\\"+this.appName, true);
 			if (regKey == null) {
 				regKey = Registry.CurrentUser.CreateSubKey("Software\\"+this.appName);
@@ -56,10 +60,14 @@ namespace FileDock {
 		}
 
 		public void LoadFromRegistry() {
+			Debug.Print("Config: loading from registry...");
 			RegistryKey regKey = Registry.CurrentUser.OpenSubKey("Software\\" + this.appName, true);
-            if( regKey != null )
+			if( regKey != null )
 			foreach (string key in regKey.GetValueNames()) {
-				if (regKey.GetValue(key) != null) { this[key] = (string)regKey.GetValue(key); }
+				if (regKey.GetValue(key) != null) { 
+					this[key] = (string)regKey.GetValue(key);
+					Debug.Print("Debug: loading {0} = {1}", key, this[key]);
+				}
 			}
 		}
 
