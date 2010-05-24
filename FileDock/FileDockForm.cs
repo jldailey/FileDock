@@ -114,13 +114,6 @@ namespace FileDock {
 				listFiles.Left = 2;
 			}
 		}
-		public string formatFileNameForList(string filename) {
-			string ret = "";
-			int limit = (int)(listFiles.Columns[0].Width / listFiles.Font.SizeInPoints);
-
-			return ret;
-		}
-
 
 		// delegate type used when refreshing the file list asynchronously
 		private delegate void RefreshDelegate();
@@ -161,7 +154,7 @@ namespace FileDock {
 						// and its still invalid, so the whole drive is invalid, so fall all the way back to c:\
 						this.currentPath = "C:\\"; // triggers refresh and recursion
 					}
-					refreshDrives();
+					refreshDrives(false);
 					return;
 				}
 				savedPaths[this.currentDrive] = this.currentDirectory;
@@ -279,6 +272,7 @@ namespace FileDock {
 		public bool dockOnLoad = true;
 
 		protected override void OnLoad(EventArgs e) {
+			Debug.Print("FileDockForm.OnLoad()");
 			if ( dockOnLoad ) {
 				// make sure to clean up after any thing that failed to unregister before
 				RegisterAppBar();
@@ -301,32 +295,29 @@ namespace FileDock {
 			listFiles.MouseLeave += new EventHandler(listFiles_MouseLeave);
 			listFiles.MouseClick += new MouseEventHandler(listFiles_MouseClick);
 			//listFiles.ItemActivate += new EventHandler(listFiles_ItemActivate);
-			listFiles.DoubleClick += new EventHandler(listFiles_DoubleClick);
 			listFiles.DragOver += new DragEventHandler(FileDockForm_DragOver);
 			listFiles.DragDrop += new DragEventHandler(FileDockForm_DragDrop);
-			listFiles.KeyUp += new KeyEventHandler(ListFiles_KeyUp);
-			listFiles.KeyDown += new KeyEventHandler(ListFiles_KeyDown);
+			listFiles.KeyUp += new KeyEventHandler(listFiles_KeyUp);
+			listFiles.KeyDown += new KeyEventHandler(listFiles_KeyDown);
 
 			// set up the file system events that will trigger refreshes
 			fileSystemWatcher1.EnableRaisingEvents = false; // dont start responding yet, until all config is done
 			fileSystemWatcher1.NotifyFilter = NotifyFilters.DirectoryName | NotifyFilters.FileName; // notify about directories as well as files
 			fileSystemWatcher1.Filter = ""; // all files
 			fileSystemWatcher1.Created += new FileSystemEventHandler(delegate(object source, FileSystemEventArgs ev) {
-				Debug.Print("Created "+ev.Name);
 				refreshFiles();
 			});
 			fileSystemWatcher1.Deleted += new FileSystemEventHandler(delegate(object source, FileSystemEventArgs ev) {
 				refreshFiles();
-				Debug.Print("Deleted "+ev.Name);
 			});
 			fileSystemWatcher1.Renamed += new RenamedEventHandler(delegate(object source, RenamedEventArgs ev) {
 				refreshFiles();
-				Debug.Print("Renamed: "+ev.OldName+" "+ev.Name);
 			});
 
 			// set double-buffering options
 			this.SetExStyles();
 
+			Debug.Print("Loading Search panel...");
 			this.searchPanel = new SearchPanel(this);
 			this.searchPanel.Location = new Point(flowLayoutPanel1.Left, listFiles.Top);
 			this.searchPanel.Hide();
@@ -336,6 +327,7 @@ namespace FileDock {
 			};
 			this.Controls.Add(this.searchPanel);
 
+			Debug.Print("Loading Favorites panel...");
 			this.favPanel = new FavoritesPanel(this);
 			this.favPanel.Location = new Point(flowLayoutPanel1.Left, listFiles.Top);
 			this.favPanel.Width = this.Width - 8;
@@ -360,11 +352,13 @@ namespace FileDock {
 
 			this.Controls.Add(this.favPanel);
 
+			Debug.Print("Loading Create Directory panel...");
 			this.createDirPanel = new CreateDirPanel(this);
 			this.createDirPanel.Location = new Point(flowLayoutPanel1.Left, listFiles.Top);
 			this.createDirPanel.Hide();
 			this.Controls.Add(this.createDirPanel);
 
+			Debug.Print("Loading Create File panel...");
 			this.createFilePanel = new CreateFilePanel(this);
 			this.createFilePanel.Location = new Point(flowLayoutPanel1.Left, listFiles.Top);
 			this.createFilePanel.Hide();
@@ -432,13 +426,12 @@ namespace FileDock {
 				}
 			}
 
-
 			this.hoveredItem = null;
 
-			refreshDrives();
+			Debug.Print("About to load drives...");
+			refreshDrives(false);
 			refreshFiles();
 			this.listFiles.Focus();
-
 
 		}
 
@@ -452,7 +445,8 @@ namespace FileDock {
 			string s = UintEncodeBytes(mem);
 			mem.Close();
 			this.config["SavedPathsMap"] = s;
-			this.config["Favorites"] = String.Join(";", favoriteFolders.ToArray());
+			if( favoriteFolders != null)
+				this.config["Favorites"] = String.Join(";", favoriteFolders.ToArray());
 			this.config.SaveToRegistry();
 			if ( this.isAppBarRegistered ) {
 				this.UnregisterAppBar();
@@ -464,7 +458,7 @@ namespace FileDock {
 			base.OnResize(e);
 			moveHandle1.Width = this.Width - 4;
 			listFiles.Columns[0].Width = this.Width - 4;
-			Debug.Print("On Resize: " + this.Width + " : "+moveHandle1.Width);
+			Debug.Print("On Resize: {0}x{1}", this.Width, this.Height);
 		}
 
 		protected override CreateParams CreateParams {
@@ -498,8 +492,8 @@ namespace FileDock {
 		#region Path rolling
 		/* Path rolling is the mechanism that would enforce mac-like file manager behavior.
 		 * To do this, you make activating a folder spawn a new instance.
-		 * You also limit the maximum number of instances to something like 3, then once you hit that limit,
-		 * you would roll paths left instead of spawning the new instance.
+		 * You would limit the maximum number of instances to something like 3.
+		 * Then if a new window would cross that limit, you would roll paths left instead.
 		 */
 		// this stack would be used by Instance 0, the far left bar, to track left-side overflow
 		private Stack<string> pathStack = null;
@@ -519,7 +513,7 @@ namespace FileDock {
 		}
 		#endregion
 
-		void ListFiles_KeyUp(object sender, KeyEventArgs e) {
+		void listFiles_KeyUp(object sender, KeyEventArgs e) {
 			Debug.Print("keyUp: " + e.KeyCode.ToString());
 			switch ( e.KeyCode ) {
 				case Keys.OemQuestion:
@@ -538,7 +532,7 @@ namespace FileDock {
 
 		}
 
-		void ListFiles_KeyDown(object sender, KeyEventArgs e)
+		void listFiles_KeyDown(object sender, KeyEventArgs e)
 		{
 			// Debug.Print("keyDown: " + e.KeyCode.ToString());
 			switch (e.KeyCode)
@@ -549,29 +543,16 @@ namespace FileDock {
 			}
 		}
 
-		private void listFiles_DoubleClick(object sender, EventArgs e) {
-			if ( (FileDockForm.ModifierKeys & Keys.Control) == 0
-					&& (FileDockForm.ModifierKeys & Keys.Shift) == 0
-					) {
-				if ( hoveredItem != null ) {
-					if ( config["SingleClick"] == "True" ) {
-						return;
-					}
-					activateFileFolder(hoveredItem);
-				}
-			}
-		}
-
 		void listFiles_ItemActivate(object sender, EventArgs e)
-		{
-			activateFileFolder(listFiles.FocusedItem);
-		}
+        {
+
+        }
 
 		private void listFiles_MouseClick(object sender, MouseEventArgs e) {
 			if ( (FileDockForm.ModifierKeys & Keys.Control) == 0
 					&& (FileDockForm.ModifierKeys & Keys.Shift) == 0
 					) {
-				if ( hoveredItem != null && config["SingleClick"] == "True" ) {
+				if ( hoveredItem != null ) {
 					if (listFiles.CheckBoxes && listFiles.CheckedItems.Contains(hoveredItem))
 						return;
 					else
@@ -1288,6 +1269,15 @@ namespace FileDock {
 		}
 
 		#endregion
+
+        private void FileDockForm_Activated(object sender, EventArgs e)
+        {
+        }
+
+        private void FileDockForm_Deactivate(object sender, EventArgs e)
+        {
+        }
+
 
 	}
 
