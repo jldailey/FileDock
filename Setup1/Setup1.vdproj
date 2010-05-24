@@ -15,8 +15,8 @@
     {
         "Entry"
         {
-        "MsmKey" = "8:_42B1FAEFE7FA4F6189D0CABFB1E728C5"
-        "OwnerKey" = "8:_UNDEFINED"
+        "MsmKey" = "8:_125DABB7570507750A929926C813BAD5"
+        "OwnerKey" = "8:_45C6486FD8234AB9A7663CC7767D21D8"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -29,12 +29,6 @@
         {
         "MsmKey" = "8:_79B6C32F80404592A92C62D0A760CD9F"
         "OwnerKey" = "8:_UNDEFINED"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_AF5539C85560340F9C5AC7ECAAE94340"
-        "OwnerKey" = "8:_45C6486FD8234AB9A7663CC7767D21D8"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -52,13 +46,7 @@
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_42B1FAEFE7FA4F6189D0CABFB1E728C5"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_AF5539C85560340F9C5AC7ECAAE94340"
+        "OwnerKey" = "8:_125DABB7570507750A929926C813BAD5"
         "MsmSig" = "8:_UNDEFINED"
         }
     }
@@ -166,34 +154,14 @@
         }
         "File"
         {
-            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_79B6C32F80404592A92C62D0A760CD9F"
-            {
-            "SourcePath" = "8:..\\FileDock\\bin\\Debug\\7-zip.dll"
-            "TargetName" = "8:7-zip.dll"
-            "Tag" = "8:"
-            "Folder" = "8:_A12B7285F5B14FCB936F048F3010C8A5"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:FALSE"
-            "IsDependency" = "11:FALSE"
-            "IsolateTo" = "8:"
-            }
-            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_AF5539C85560340F9C5AC7ECAAE94340"
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_125DABB7570507750A929926C813BAD5"
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:AppBars, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL"
+            "AssemblyAsmDisplayName" = "8:AppBars, Version=1.0.0.0, Culture=neutral, processorArchitecture=x86"
                 "ScatterAssemblies"
                 {
-                    "_AF5539C85560340F9C5AC7ECAAE94340"
+                    "_125DABB7570507750A929926C813BAD5"
                     {
                     "Name" = "8:AppBars.dll"
                     "Attributes" = "3:512"
@@ -215,6 +183,26 @@
             "Register" = "3:1"
             "Exclude" = "11:FALSE"
             "IsDependency" = "11:TRUE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_79B6C32F80404592A92C62D0A760CD9F"
+            {
+            "SourcePath" = "8:..\\FileDock\\bin\\Debug\\7-zip.dll"
+            "TargetName" = "8:7-zip.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_A12B7285F5B14FCB936F048F3010C8A5"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_E41081CCDA0E4C39854B118BA0FA8EA3"
@@ -269,7 +257,7 @@
             "{1525181F-901A-416C-8A58-119130FE478E}:_C700BCE8435F4490A4B9B48F5EF1CA84"
             {
             "Name" = "8:#1916"
-            "AlwaysCreate" = "11:FALSE"
+            "AlwaysCreate" = "11:TRUE"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Property" = "8:DesktopFolder"
@@ -294,7 +282,7 @@
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:FileDock"
         "ProductCode" = "8:{B865723F-24AC-4B34-8C49-C24DF313E420}"
-        "PackageCode" = "8:{E7A69EC1-609C-4AE3-84DF-F63E5DC36689}"
+        "PackageCode" = "8:{933526CD-B508-4BC0-B1D9-EE596D58A33B}"
         "UpgradeCode" = "8:{FA5CD851-72DD-42AF-84B0-A642DD10538D}"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
@@ -413,6 +401,20 @@
         }
         "Shortcut"
         {
+            "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_1521C13E704F4BB2ACE6E13B22C5B203"
+            {
+            "Name" = "8:FileDock"
+            "Arguments" = "8:"
+            "Description" = "8:"
+            "ShowCmd" = "3:1"
+            "IconIndex" = "3:0"
+            "Transitive" = "11:FALSE"
+            "Target" = "8:_45C6486FD8234AB9A7663CC7767D21D8"
+            "Folder" = "8:_C700BCE8435F4490A4B9B48F5EF1CA84"
+            "WorkingFolder" = "8:_A12B7285F5B14FCB936F048F3010C8A5"
+            "Icon" = "8:"
+            "Feature" = "8:"
+            }
         }
         "UserInterface"
         {
@@ -812,37 +814,9 @@
         }
         "ProjectOutput"
         {
-            "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_42B1FAEFE7FA4F6189D0CABFB1E728C5"
-            {
-            "SourcePath" = "8:..\\AppBars\\obj\\Release\\AppBars.dll"
-            "TargetName" = "8:"
-            "Tag" = "8:"
-            "Folder" = "8:_A12B7285F5B14FCB936F048F3010C8A5"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:FALSE"
-            "IsDependency" = "11:FALSE"
-            "IsolateTo" = "8:"
-            "ProjectOutputGroupRegister" = "3:1"
-            "OutputConfiguration" = "8:"
-            "OutputGroupCanonicalName" = "8:Built"
-            "OutputProjectGuid" = "8:{56912831-06FF-4515-AEC5-CAC61D703CDC}"
-            "ShowKeyOutput" = "11:TRUE"
-                "ExcludeFilters"
-                {
-                }
-            }
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_45C6486FD8234AB9A7663CC7767D21D8"
             {
-            "SourcePath" = "8:..\\FileDock\\obj\\Release\\FileDock.exe"
+            "SourcePath" = "8:..\\FileDock\\obj\\Debug\\FileDock.exe"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_A12B7285F5B14FCB936F048F3010C8A5"
