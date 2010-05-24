@@ -18,12 +18,12 @@ namespace FileDock
 		protected Size idealSize;
 		protected Point idealLocation;
 
-		private int appBarCallback;//our callback message value for the wndproc
+		private static int appBarCallback;//our callback message value for the wndproc
 
 		public AppBar()
 		{
 
-			appBarCallback = RegisterWindowMessage("Windows Forms AppBar");
+			AppBar.appBarCallback = RegisterWindowMessage("Windows Forms AppBar");
 			isAppBarRegistered = false;
 			idealSize = new Size(100,100);
 		}
@@ -37,12 +37,12 @@ namespace FileDock
 
 		protected override void WndProc(ref Message m)
 		{
-			if (m.Msg == this.appBarCallback) 
+			if (m.Msg == AppBar.appBarCallback) 
 			{
 				switch ((int)m.WParam) 
 				{
 					case ABN_FULLSCREENAPP:
-						//Debug.Print("ABN_FULLSCREENAPP: "+m.ToString());
+						Debug.Print("ABN_FULLSCREENAPP: "+m.ToString());
 						if ( (int)m.LParam != 0 ) {
 							Debug.Print("ALERT: m.LParam = "+((int)m.LParam));
 						}
@@ -50,7 +50,7 @@ namespace FileDock
 						SendToBack();
 						break;
 					case ABN_POSCHANGED:
-						Debug.Print("ABN_POSCHANGED: " + m.ToString());
+						// Debug.Print("ABN_POSCHANGED: " + m.ToString());
 						break;
 					case ABN_STATECHANGE: /*TODO: respond to StateChanged message */;
 						Debug.Print("ABN_STATECHANGE: " + m.ToString());
@@ -63,10 +63,10 @@ namespace FileDock
 						break;
 				}
 			} else if ( m.Msg == (int)WindowsMessages.WM_ACTIVATE ) {
-				Debug.Print(m.ToString());
+				// Debug.Print(m.ToString());
 				AppBar.ActivateAppBar(this.Handle);
 			} else if ( m.Msg == (int)WindowsMessages.WM_ACTIVATEAPP ) {
-				Debug.Print(m.ToString());
+				// Debug.Print(m.ToString());
 				AppBar.ActivateAppBar(this.Handle);
 			} else if ( m.Msg == (int)WindowsMessages.WM_WINDOWPOSCHANGED) {
 				WINDOWPOS pos = (WINDOWPOS)Marshal.PtrToStructure(m.LParam,typeof(WINDOWPOS));
@@ -107,19 +107,20 @@ namespace FileDock
 			abd.hWnd = hWnd;
 			// saved the proposed rectangle
 			Rectangle R = new Rectangle(idealLocation, idealSize);
-			abd.rc.top = R.Top;
-			abd.rc.bottom = R.Bottom;
 			abd.rc.left = R.Left;
 			abd.rc.right = R.Right;
-			// then figure out which edge that rectangle should be on
+			// then figure out which screen that rectangle would be on
 			Screen S = Screen.FromRectangle(R);
-			abd.rc.bottom = S.Bounds.Bottom;
-			if ( S.Bounds.Left != 0 ) {
+			// make it full height
+			abd.rc.top = S.WorkingArea.Top;
+			abd.rc.bottom = S.WorkingArea.Bottom;
+			if ( S.Bounds.Left != 0 ) { // multiple monitors
 				R.Offset(-S.Bounds.Left, 0);
 			}
+			// see whether we are on the left or right side of the screen
 			int centerX = (R.Left + R.Right) >> 1;
 			int centerScreen = S.Bounds.Width >> 1;
-			if ( centerX < 0 ) {
+			if ( centerX < 0 ) { // multiple monitors
 				if ( Math.Abs(centerX) < centerScreen ) {
 					abd.uEdge = ABE_RIGHT;
 				} else {
@@ -130,7 +131,6 @@ namespace FileDock
 			} else {
 				abd.uEdge = ABE_LEFT;
 			}
-			Debug.Print(centerX + " > " + centerScreen + "? => " + abd.uEdge);
 			// once we've decided on an edge, align the rect cleanly to that edge
 			switch ( abd.uEdge ) {
 				case ABE_LEFT:
@@ -153,8 +153,12 @@ namespace FileDock
 		}
 
 		public void RegisterAppBar() {
-			AppBar.RegisterAppBar(this.Handle, this.appBarCallback);
+			AppBar.RegisterAppBar(this.Handle, AppBar.appBarCallback);
 			this.isAppBarRegistered = true;
+		}
+		public static bool RegisterAppBar(IntPtr hWnd)
+		{
+			return RegisterAppBar(hWnd, AppBar.appBarCallback);
 		}
 		public static bool RegisterAppBar(IntPtr hWnd, int callback) 
 		{
