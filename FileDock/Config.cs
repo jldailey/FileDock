@@ -96,16 +96,21 @@ namespace FileDock {
 					s += key + ", ";
 					if (mapControls.ContainsKey(key)) {
 						// update the control on the page with the value set in the config
+						Debug.Print("Setting control value for: " + key);
 						SetControlValue(c, GetControlValue(mapControls[key]));
 						// then update our mapping to point to the new control
 						mapControls[key] = c;
+						Debug.Print("mapControls[" + key + "] updated.");
 					} else {
 						// if we have a control to use as a backing store then forget about saving the string
 						if (mapStrings.ContainsKey(key)) {
+							Debug.Print("Setting control value for: " + key);
 							SetControlValue(c, mapStrings[key]);
 							mapStrings.Remove(key);
+							Debug.Print("mapStrings[" + key + "] removed.");
 						}
 						mapControls.Add(key, c);
+						Debug.Print("mapControls[" + key + "] added.");
 					}
 				}
 				s += RefreshControlHash(c);
@@ -204,6 +209,7 @@ namespace FileDock {
 				if (mapControls.ContainsKey(name)) {
 					string val = Config.GetControlValue(mapControls[name]);
 					mapStrings[name] = val; // cache the control value in the strings table, in case the form is disposed
+					Debug.Print("mapStrings[" + name + "] = \""+val+"\" (from control)");
 					return val;
 				}
 				if (mapStrings.ContainsKey(name)) {
@@ -213,10 +219,12 @@ namespace FileDock {
 			}
 			set {
 				// always cache the value in the strings table, in case the form is disposed
+				Debug.Print("mapStrings[" + name + "] = \"" + value + "\" (from setter)");
 				mapStrings[name] = value;
 				
 				// and also store the value in any bound controls
 				if (mapControls.ContainsKey(name)) {
+					Debug.Print("Config storing value in form control: " + value.ToString());
 					Config.SetControlValue(mapControls[name], value);
 				}
 			}

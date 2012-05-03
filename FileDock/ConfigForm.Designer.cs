@@ -31,7 +31,7 @@ namespace FileDock {
 			this.label1 = new System.Windows.Forms.Label();
 			this.txtAddIgnore = new System.Windows.Forms.TextBox();
 			this.listIgnore = new System.Windows.Forms.ListBox();
-			this.button11 = new System.Windows.Forms.Button();
+			this.btnBrowseVim = new System.Windows.Forms.Button();
 			this.groupBox2 = new System.Windows.Forms.GroupBox();
 			this.txtEditVimLocation = new System.Windows.Forms.TextBox();
 			this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
@@ -120,26 +120,26 @@ namespace FileDock {
 			this.listIgnore.TabIndex = 3;
 			this.listIgnore.Tag = "IgnoreFiles";
 			// 
-			// button11
+			// btnBrowseVim
 			// 
-			this.button11.AllowDrop = true;
-			this.button11.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.button11.BackgroundImage = global::FileDock.Properties.Resources.gvim_IDR_VIM;
-			this.button11.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-			this.button11.FlatAppearance.BorderSize = 0;
-			this.button11.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-			this.button11.Location = new System.Drawing.Point(7, 16);
-			this.button11.Name = "button11";
-			this.button11.Padding = new System.Windows.Forms.Padding(4);
-			this.button11.Size = new System.Drawing.Size(24, 24);
-			this.button11.TabIndex = 7;
-			this.button11.UseVisualStyleBackColor = true;
-			this.button11.Click += new System.EventHandler(this.btnEditVimLocation_Click);
+			this.btnBrowseVim.AllowDrop = true;
+			this.btnBrowseVim.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.btnBrowseVim.BackgroundImage = global::FileDock.Properties.Resources.gvim_IDR_VIM;
+			this.btnBrowseVim.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
+			this.btnBrowseVim.FlatAppearance.BorderSize = 0;
+			this.btnBrowseVim.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+			this.btnBrowseVim.Location = new System.Drawing.Point(7, 16);
+			this.btnBrowseVim.Name = "btnBrowseVim";
+			this.btnBrowseVim.Padding = new System.Windows.Forms.Padding(4);
+			this.btnBrowseVim.Size = new System.Drawing.Size(24, 24);
+			this.btnBrowseVim.TabIndex = 7;
+			this.btnBrowseVim.UseVisualStyleBackColor = true;
+			this.btnBrowseVim.Click += new System.EventHandler(this.btnEditVimLocation_Click);
 			// 
 			// groupBox2
 			// 
 			this.groupBox2.Controls.Add(this.txtEditVimLocation);
-			this.groupBox2.Controls.Add(this.button11);
+			this.groupBox2.Controls.Add(this.btnBrowseVim);
 			this.groupBox2.Location = new System.Drawing.Point(12, 185);
 			this.groupBox2.Name = "groupBox2";
 			this.groupBox2.Size = new System.Drawing.Size(200, 49);
@@ -164,7 +164,7 @@ namespace FileDock {
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(222, 238);
+			this.ClientSize = new System.Drawing.Size(220, 242);
 			this.Controls.Add(this.groupBox2);
 			this.Controls.Add(this.groupBox1);
 			this.Controls.Add(this.checkBox2);
@@ -190,7 +190,7 @@ namespace FileDock {
 		private System.Windows.Forms.TextBox txtAddIgnore;
 		private System.Windows.Forms.ListBox listIgnore;
 		private System.Windows.Forms.Button btnRemoveIgnore;
-		private System.Windows.Forms.Button button11;
+		private System.Windows.Forms.Button btnBrowseVim;
 		private System.Windows.Forms.GroupBox groupBox2;
 		private System.Windows.Forms.OpenFileDialog openFileDialog1;
 		private System.Windows.Forms.TextBox txtEditVimLocation;
