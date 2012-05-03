@@ -32,6 +32,7 @@ namespace FileDock {
 			InitializeComponent();
 			Selected = false;
 			string label = drive.Name.ToUpper().Substring(0,1);
+			this.driveLabel.Text = label + ":";
 
 			switch (drive.DriveType) {
 				case DriveType.CDRom:
@@ -47,7 +48,6 @@ namespace FileDock {
 					this.driveIconPanel.BackgroundImage = global::FileDock.Properties.Resources.SHELL32_9;
 					break;
 			}
-			this.driveLabel.Text = label;
 			
 			mTip = new ToolTip();
 			EventHandler showTip = delegate(object sender, EventArgs e)

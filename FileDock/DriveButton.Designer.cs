@@ -29,14 +29,14 @@ namespace FileDock {
 			// 
 			// driveIconPanel
 			// 
-			this.driveIconPanel.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-									| System.Windows.Forms.AnchorStyles.Left)));
+			this.driveIconPanel.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left)));
 			this.driveIconPanel.BackgroundImage = global::FileDock.Properties.Resources.SHELL32_12;
 			this.driveIconPanel.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-			this.driveIconPanel.Location = new System.Drawing.Point(14, -2);
+			this.driveIconPanel.Location = new System.Drawing.Point(18, 1);
 			this.driveIconPanel.Margin = new System.Windows.Forms.Padding(0);
 			this.driveIconPanel.Name = "driveIconPanel";
-			this.driveIconPanel.Size = new System.Drawing.Size(16, 18);
+			this.driveIconPanel.Size = new System.Drawing.Size(18, 18);
 			this.driveIconPanel.TabIndex = 0;
 			// 
 			// driveLabel
