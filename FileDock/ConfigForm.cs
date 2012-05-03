@@ -16,6 +16,7 @@ namespace FileDock {
 
 		protected override void OnClosing(CancelEventArgs e)
 		{
+			this.parent.refreshAllInstances();
 			base.OnClosing(e);
 		}
 
@@ -67,5 +68,10 @@ namespace FileDock {
 		{
 			txtEditVimLocation.Text = openFileDialog1.FileName;
 		}
+
+		private void btnBrowse7Zip_Click( object sender, EventArgs e ) {
+
+		}
+
 	}
 }
