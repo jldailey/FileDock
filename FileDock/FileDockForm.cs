@@ -38,15 +38,8 @@ namespace FileDock {
 		public Dictionary<string, string> savedPaths; // maps drives to the last path we visited on that drive
 
 		private int fileDockCallback;
-		public FileDockForm() {
-			this.DoubleBuffered = true;
-			savedPaths = new Dictionary<string, string>();
-			InitializeComponent();
-			leftChild = null;
-			// fileDockCallback = RegisterWindowMessage("FileDock Message");
-		}
 
-		public FileDockForm(FileDockForm left) {
+		public FileDockForm(FileDockForm left = null ) {
 			this.DoubleBuffered = true;
 			savedPaths = new Dictionary<string, string>();
 			InitializeComponent();
@@ -305,12 +298,15 @@ namespace FileDock {
 			fileSystemWatcher1.NotifyFilter = NotifyFilters.DirectoryName | NotifyFilters.FileName; // notify about directories as well as files
 			fileSystemWatcher1.Filter = ""; // all files
 			fileSystemWatcher1.Created += new FileSystemEventHandler(delegate(object source, FileSystemEventArgs ev) {
+				Debug.Print("FileSystemEvent: Created");
 				refreshFiles();
 			});
 			fileSystemWatcher1.Deleted += new FileSystemEventHandler(delegate(object source, FileSystemEventArgs ev) {
+				Debug.Print("FileSystemEvent: Deleted");
 				refreshFiles();
 			});
 			fileSystemWatcher1.Renamed += new RenamedEventHandler(delegate(object source, RenamedEventArgs ev) {
+				Debug.Print("FileSystemEvent: Renamed");
 				refreshFiles();
 			});
 
@@ -489,7 +485,7 @@ namespace FileDock {
 		}
 		#endregion
 
-		#region Path rolling
+		#region Experiment: Path rolling
 		/* Path rolling is the mechanism that would enforce mac-like file manager behavior.
 		 * To do this, you make activating a folder spawn a new instance.
 		 * You would limit the maximum number of instances to something like 3.
@@ -582,13 +578,12 @@ namespace FileDock {
 				Point hoverPos = this.PointToClient(e.Location);
 				hoverPos = new Point(hoverPos.X + this.Left + 35 , hoverPos.Y );
 				string hoverText = hoveredItem.Text;
-				try {
-					string fname = (string)hoveredItem.Tag;
+				string fname = (string)hoveredItem.Tag;
+				if( File.Exists(fname) ) {
 					FileInfo f = new FileInfo(fname);
 					double kb = f.Length / 1024.0;
 					hoverText += String.Format("\n- {0:0,0.00} kb", kb);
 					hoveredTip.Show(hoverText, listFiles, hoverPos);
-				} catch ( FileNotFoundException ) {
 				}
 			}
 			//Debug.Print("Hovered: " + hoveredItem.Text + " prevHovered: " + (prevHoveredItem != null ? prevHoveredItem.Text : "null"));
@@ -817,7 +812,9 @@ namespace FileDock {
 			if (currentDirectory.Contains(":\\")) {
 				currentDirectory = currentDirectory.Substring(3);
 			}
-			if (!Directory.Exists(currentPath)) {
+			if (Directory.Exists(currentPath)) {
+				refreshFiles();
+			} else {
 				Debug.Print("Executing");
 				startFileWithDefaultHandler(currentPath);
 				// cover the loading time with a little bounce animation of the clicked item
@@ -858,8 +855,6 @@ namespace FileDock {
 				floater.Dispose();
 
 				currentDirectory = save_dir;
-			} else {
-				refreshFiles();
 			}
 		}
 
@@ -1105,7 +1100,6 @@ namespace FileDock {
 				configForm.Focus();
 			} else {
 				configForm = new ConfigForm(this);
-				config.UpdateFormBinding(configForm);
 				configForm.Show(this);
 				configForm.Focus();
 			}
@@ -1269,15 +1263,6 @@ namespace FileDock {
 		}
 
 		#endregion
-
-        private void FileDockForm_Activated(object sender, EventArgs e)
-        {
-        }
-
-        private void FileDockForm_Deactivate(object sender, EventArgs e)
-        {
-        }
-
 
 	}
 
