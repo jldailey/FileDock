@@ -20,8 +20,8 @@ namespace FileDock {
 	public partial class FileDockForm : AppBar {
 
 		public string currentDrive {
-			get {	return this.config["CurrentDrive"];	}
-			set {	this.config["CurrentDrive"] = value;}
+			get { return this.config["CurrentDrive"]; }
+			set { this.config["CurrentDrive"] = Regex.Replace(value, @"^(\w+):.*$", @"$1"); }
 		}
 		public string currentDirectory {
 			get { return this.config["CurrentDirectory"]; }
@@ -37,117 +37,53 @@ namespace FileDock {
 		}
 		public Dictionary<string, string> savedPaths; // maps drives to the last path we visited on that drive
 
-		private int fileDockCallback;
+		private DrivePanel drives;
 
-		public FileDockForm(FileDockForm left = null ) {
+		public FileDockForm( FileDockForm left = null ) {
 			this.DoubleBuffered = true;
 			savedPaths = new Dictionary<string, string>();
 			InitializeComponent();
 			leftChild = left;
-			// fileDockCallback = RegisterWindowMessage("FileDock Message");
-		}
-
-		protected override void WndProc(ref Message m)
-		{
-			if ( false && m.Msg == this.fileDockCallback )
-			{
-				switch ((int)m.WParam)
-				{
-					default:
-						Debug.Print("Ignoring windows message: " + m.ToString());
-						break;
-				}
-			}
-			base.WndProc(ref m);
-		}
-
-		// re-read all the system drives and re-draw the DriveButtons
-		public void refreshDrives() {
-			refreshDrives(true);
-		}
-		public void refreshDrives(bool moveListFiles) {
-			Debug.Print("refreshDrives");
-			int driveCount = 0;
-			DriveInfo[] drives = DriveInfo.GetDrives();
-			Debug.Print("refreshDrives: got list of drives");
-			flowLayoutPanel1.Controls.Clear();
-			foreach (DriveInfo drive in drives) {
-				String name = drive.Name.Substring(0, 1);
-				DriveButton b = new DriveButton(drive);
-				if (name == currentDrive) {
-					b.Selected = true;
-				}
-				b.BeforeSelectDrive += delegate(string newDrive)
-				{
-					foreach (Control c in flowLayoutPanel1.Controls) {
-						try {
-							DriveButton db = ((DriveButton)c);
-							db.Selected = false;
-						} catch (InvalidCastException) {
-							//pass
-						}
-					}
-				};
-				b.OnSelectDrive += delegate(string newDrive)
-				{
-					if (newDrive != currentDrive) {
-						this.currentDrive = newDrive;
-						this.currentDirectory = (savedPaths.ContainsKey(newDrive) ? savedPaths[newDrive] : "");
-						refreshFiles();
-					}
-					this.listFiles.Focus();
-				};
-
-
-				flowLayoutPanel1.Controls.Add(b);
-				driveCount++;
-			}
-			if ( moveListFiles ) {
-				listFiles.Top = button3.Bottom + 4;
-				listFiles.Left = 2;
-			}
 		}
 
 		// delegate type used when refreshing the file list asynchronously
 		private delegate void RefreshDelegate();
 
 		// re-read the current directory and fill up the ListView
-		public void refreshFiles(bool allFileDocks) {
+		public void refreshFiles( bool allFileDocks ) {
 			refreshFiles();
-			if (allFileDocks
+			if( allFileDocks
 				&& this.rightChild != null
-				&& !this.rightChild.IsDisposed) {
+				&& !this.rightChild.IsDisposed ) {
 				this.rightChild.refreshFiles(true);
 			}
 		}
 		private Semaphore listSem = new Semaphore(1, 1);
 		private bool isRefreshing = false;
 		public void refreshFiles() {
-			if (isRefreshing) 
+			Debug.Print("Refreshing files...{0}", currentPath);
+			if( isRefreshing ) {
+				Debug.Print("Aborting double-refresh");
 				return;
+			}
 			isRefreshing = true;
-			try
-			{
+			try {
 				// try using the current path
-				try
-				{
+				try {
 					fileSystemWatcher1.Path = this.currentPath;
-				}
-				catch (ArgumentException ex)
-				{
+				} catch( ArgumentException ) {
+					isRefreshing = false;
 					// if that fails
 					// and we are looking at some subdirectory on the drive
-					if (this.currentDirectory != "")
-					{
+					if( this.currentDirectory != "" ) {
 						// then try looking at the root of the drive
-						this.currentPath = this.currentDrive + ":\\"; // triggers a refresh (and thus recursion)
-					}
-					else
-					{ // else we are already looking for the drive root
+						this.currentPath = this.currentDrive + @":\"; // triggers a refresh (and thus recursion)
+					} else { // else we are already looking for the drive root
 						// and its still invalid, so the whole drive is invalid, so fall all the way back to c:\
-						this.currentPath = "C:\\"; // triggers refresh and recursion
+						this.currentPath = @"C:\"; // triggers refresh and recursion
+						this.drives.SelectedDrive = "C";
 					}
-					refreshDrives(false);
+					// drives.refresh();
 					return;
 				}
 				savedPaths[this.currentDrive] = this.currentDirectory;
@@ -156,12 +92,11 @@ namespace FileDock {
 				this.Refresh();
 
 				// build a new tree asynchronously, so that form can still draw itself while this is updating
-				RefreshDelegate d = new RefreshDelegate(delegate()
-				{
-					try
-					{
+				RefreshDelegate refresh = new RefreshDelegate(delegate() {
+					try {
 						listSem.WaitOne();
 						fileSystemWatcher1.EnableRaisingEvents = false;
+						listFiles.Hide();
 						listFiles.Items.Clear();
 						int maxLen = 30;
 						listFiles.Columns[0].Text = AbbreviatePath(this.currentPath, maxLen);
@@ -173,8 +108,7 @@ namespace FileDock {
 						string[] dirs = Directory.GetDirectories(currentPath);
 						Array.Sort<string>(dirs);
 						List<string> ignore = new List<string>(this.config["IgnoreFiles"].Split(','));
-						foreach (string dir in dirs)
-						{
+						foreach( string dir in dirs ) {
 							string fname = Path.GetFileName(dir);
 							ListViewItem node = listFiles.Items.Add(fname);
 							node.ToolTipText = fname;
@@ -184,18 +118,15 @@ namespace FileDock {
 						}
 						string[] files = Directory.GetFiles(currentPath, "*.*");
 						Array.Sort<string>(files);
-						foreach (string file in files)
-						{
+						foreach( string file in files ) {
 							// check the ignore list
 							string ext = Path.GetExtension(file);
-							if (ignore.Contains(ext))
+							if( ignore.Contains(ext) )
 								continue;
 							// check for hidden files
-							if (this.config["ShowHidden"] == "False")
-							{
+							if( this.config["ShowHidden"] == "False" ) {
 								FileInfo inf = new FileInfo(file);
-								if ((inf.Attributes & FileAttributes.Hidden) == FileAttributes.Hidden)
-								{
+								if( (inf.Attributes & FileAttributes.Hidden) == FileAttributes.Hidden ) {
 									continue;
 								}
 							}
@@ -206,67 +137,49 @@ namespace FileDock {
 							node.Group = listFiles.Groups[1];
 						}
 						fileSystemWatcher1.EnableRaisingEvents = true;
-					}
-					catch (Exception e)
-					{
+					} catch( Exception e ) {
 						MessageBox.Show("Exception: " + e.ToString());
-					}
-					finally
-					{
+					} finally {
+						listFiles.Show();
 						listSem.Release();
 					}
-				});
+				}); // end RefreshDelegate
 				// begin the async build above
-				IAsyncResult res = listFiles.BeginInvoke(d);
+				IAsyncResult res = listFiles.BeginInvoke(refresh);
 
-			}
-			catch (UnauthorizedAccessException)
-			{
+			} catch( UnauthorizedAccessException ) {
 				MessageBox.Show("Access denied");
 				this.currentDirectory = "";
-			}
-			catch (DirectoryNotFoundException)
-			{
+			} catch( DirectoryNotFoundException ) {
 				MessageBox.Show("Directory not found: " + currentPath);
 				this.currentDirectory = "";
 				refreshFiles();
-			}
-			catch (IOException e)
-			{
+			} catch( IOException e ) {
 				MessageBox.Show("IOError :" + e.ToString());
-			}
-			finally
-			{
+			} finally {
 				isRefreshing = false;
 			}
 		}
 
-		void listFiles_ItemChecked(object sender, ItemCheckedEventArgs e)
-		{
+		void listFiles_ItemChecked( object sender, ItemCheckedEventArgs e ) {
 			e.Item.Selected = e.Item.Checked;
 			Debug.Print("Checked items: " + listFiles.CheckedItems.Count.ToString());
-			if (listFiles.CheckedItems.Count == 0
-				&& (FileDockForm.ModifierKeys & Keys.Control ) == 0)
-			{
+			if( listFiles.CheckedItems.Count == 0
+				&& (FileDockForm.ModifierKeys & Keys.Control) == 0 ) {
 				listFiles.CheckBoxes = false;
 			}
 		}
 
-		SearchPanel searchPanel;
-		FavoritesPanel favPanel;
 		ConfigForm configForm;
 		public Config config;
 		FileDockForm rightChild;
 		FileDockForm leftChild;
 
-		CreateDirPanel createDirPanel;
-		CreateFilePanel createFilePanel;
-
 		public bool dockOnLoad = true;
 
-		protected override void OnLoad(EventArgs e) {
+		protected override void OnLoad( EventArgs e ) {
 			Debug.Print("FileDockForm.OnLoad()");
-			if ( dockOnLoad ) {
+			if( dockOnLoad ) {
 				// make sure to clean up after any thing that failed to unregister before
 				RegisterAppBar();
 				UnregisterAppBar();
@@ -274,7 +187,7 @@ namespace FileDock {
 				this.idealSize = new Size(this.Width, SystemInformation.PrimaryMonitorSize.Height);
 				this.idealLocation = new Point(0, 0);
 				this.RefreshPosition();
-			} else if ( this.leftChild != null ) {
+			} else if( this.leftChild != null ) {
 				this.Size = new Size(this.leftChild.Width, this.leftChild.Height);
 				this.Left = this.leftChild.Right;
 				this.TopMost = true;
@@ -287,25 +200,26 @@ namespace FileDock {
 			listFiles.MouseMove += new MouseEventHandler(listFiles_MouseMove);
 			listFiles.MouseLeave += new EventHandler(listFiles_MouseLeave);
 			listFiles.MouseClick += new MouseEventHandler(listFiles_MouseClick);
-			//listFiles.ItemActivate += new EventHandler(listFiles_ItemActivate);
+			listFiles.ItemActivate += new EventHandler(listFiles_ItemActivate);
 			listFiles.DragOver += new DragEventHandler(FileDockForm_DragOver);
 			listFiles.DragDrop += new DragEventHandler(FileDockForm_DragDrop);
 			listFiles.KeyUp += new KeyEventHandler(listFiles_KeyUp);
 			listFiles.KeyDown += new KeyEventHandler(listFiles_KeyDown);
+			listFiles.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
 
 			// set up the file system events that will trigger refreshes
 			fileSystemWatcher1.EnableRaisingEvents = false; // dont start responding yet, until all config is done
 			fileSystemWatcher1.NotifyFilter = NotifyFilters.DirectoryName | NotifyFilters.FileName; // notify about directories as well as files
 			fileSystemWatcher1.Filter = ""; // all files
-			fileSystemWatcher1.Created += new FileSystemEventHandler(delegate(object source, FileSystemEventArgs ev) {
+			fileSystemWatcher1.Created += new FileSystemEventHandler(delegate( object source, FileSystemEventArgs ev ) {
 				Debug.Print("FileSystemEvent: Created");
 				refreshFiles();
 			});
-			fileSystemWatcher1.Deleted += new FileSystemEventHandler(delegate(object source, FileSystemEventArgs ev) {
+			fileSystemWatcher1.Deleted += new FileSystemEventHandler(delegate( object source, FileSystemEventArgs ev ) {
 				Debug.Print("FileSystemEvent: Deleted");
 				refreshFiles();
 			});
-			fileSystemWatcher1.Renamed += new RenamedEventHandler(delegate(object source, RenamedEventArgs ev) {
+			fileSystemWatcher1.Renamed += new RenamedEventHandler(delegate( object source, RenamedEventArgs ev ) {
 				Debug.Print("FileSystemEvent: Renamed");
 				refreshFiles();
 			});
@@ -313,66 +227,18 @@ namespace FileDock {
 			// set double-buffering options
 			this.SetExStyles();
 
-			Debug.Print("Loading Search panel...");
-			this.searchPanel = new SearchPanel(this);
-			this.searchPanel.Location = new Point(flowLayoutPanel1.Left, listFiles.Top);
-			this.searchPanel.Hide();
-			this.searchPanel.AfterToggle += delegate {
-				if ( this.searchPanel.Visible )
-					this.searchPanel.txtFilename.Focus();
-			};
-			this.Controls.Add(this.searchPanel);
-
-			Debug.Print("Loading Favorites panel...");
-			this.favPanel = new FavoritesPanel(this);
-			this.favPanel.Location = new Point(flowLayoutPanel1.Left, listFiles.Top);
-			this.favPanel.Width = this.Width - 8;
-			this.favPanel.Hide();
-			this.favPanel.FavoriteSelected += delegate(string path) {
-				this.currentPath = path;
-			};
-			this.favPanel.AfterToggle += delegate {
-				if ( this.favPanel.Visible ) {
-					this.favPanel.listFavs.Items.Clear();
-					this.favPanel.listFavs.Items.AddRange(favoriteFolders.ToArray());
-				} else {
-					this.favPanel.listFavs.Items.Clear();
-				}
-			};
-			this.favPanel.listFavs.DrawMode = DrawMode.OwnerDrawVariable;
-			this.favPanel.listFavs.DrawItem += new DrawItemEventHandler(delegate (object sender, DrawItemEventArgs ev) {
-				string text = AbbreviatePath(this.favPanel.listFavs.Items[ev.Index].ToString(), this.listFiles.Font, ev.Bounds.Width);
-				ev.Graphics.DrawString(text,this.listFiles.Font, Brushes.Black, ev.Bounds.X+1, ev.Bounds.Y+3);
-			});
-			// this.favPanel.listFavs.MeasureItem += new MeasureItemEventHandler(delegate(object sender, MeasureItemEventArgs ev) {	});
-
-			this.Controls.Add(this.favPanel);
-
-			Debug.Print("Loading Create Directory panel...");
-			this.createDirPanel = new CreateDirPanel(this);
-			this.createDirPanel.Location = new Point(flowLayoutPanel1.Left, listFiles.Top);
-			this.createDirPanel.Hide();
-			this.Controls.Add(this.createDirPanel);
-
-			Debug.Print("Loading Create File panel...");
-			this.createFilePanel = new CreateFilePanel(this);
-			this.createFilePanel.Location = new Point(flowLayoutPanel1.Left, listFiles.Top);
-			this.createFilePanel.Hide();
-			this.Controls.Add(this.createFilePanel);
-
 			this.InstanceIndex = this.getInstanceIndex();
 
 			this.configForm = new ConfigForm(this);
-			this.config = new Config(this.configForm, "FileDock\\Instance"+this.InstanceIndex);
+			this.config = new Config(this.configForm, "FileDock\\Instance" + this.InstanceIndex);
 
 			// set some default config values
 			this.config["SingleClick"] = "True";
 			this.config["CurrentDirectory"] = "";
 			this.config["CurrentDrive"] = "C";
 			this.config["SavedPathsMap"] = "";
-			this.config["Favorites"] = "";
 			this.config["IgnoreFiles"] = "";
-			this.config["VimLocation"] = @"C:\Program Files\Vim\vim72\gvim.exe";
+			this.config["VimLocation"] = @"C:\Program Files\Vim\vim73\gvim.exe";
 
 			// load any saved values from the registry, overwriting the defaults
 			this.config.LoadFromRegistry();
@@ -384,35 +250,28 @@ namespace FileDock {
 				mem.WriteByte(0x11);
 				mem.Position = 0;
 				savedPaths = (Dictionary<string, string>)(new BinaryFormatter()).Deserialize(mem);
-			} catch ( SerializationException ex ) {
+				mem.Close();
+				mem.Dispose();
+			} catch( SerializationException ) {
 				// pass
-			} catch ( Exception ex ) {
+			} catch( Exception ex ) {
 				MessageBox.Show(ex.ToString());
-			}
-
-			// then de-serialize the list of favorites
-			if ( this.leftChild != null ) {
-				this.favoriteFolders = this.leftChild.favoriteFolders;
-			} else {
-				this.favoriteFolders = new List<string>();
-				this.favoriteFolders.AddRange(this.config["Favorites"].Split(';'));
-				this.favoriteFolders.Remove("");
 			}
 
 			// then last, and highest priority, would be a path passed on the command line
 			bool skipone = true;
-			foreach ( string arg in Environment.GetCommandLineArgs() ) {
-				if ( skipone ) {
+			foreach( string arg in Environment.GetCommandLineArgs() ) {
+				if( skipone ) {
 					skipone = false;
 					continue;
 				}
 				Regex R = new Regex(@"(\w{1}):[/\\](.*)$");
-				if ( R.IsMatch(arg) ) {
+				if( R.IsMatch(arg) ) {
 					Match m = R.Match(arg);
 					this.config["CurrentDrive"] = m.Groups[1].Value;
-					if ( File.Exists(m.Groups[0].Value) ) {
+					if( File.Exists(m.Groups[0].Value) ) {
 						this.config["CurrentDirectory"] = Regex.Replace(m.Groups[2].Value, @"[/\\][^/\\]+$", "");
-					} else if ( Directory.Exists(m.Groups[0].Value) ) {
+					} else if( Directory.Exists(m.Groups[0].Value) ) {
 						this.config["CurrentDirectory"] = m.Groups[2].Value;
 					} else {
 						MessageBox.Show("File/Directory does not exist: " + arg);
@@ -422,39 +281,46 @@ namespace FileDock {
 				}
 			}
 
-			this.hoveredItem = null;
+			this.hoverItem = null;
 
-			Debug.Print("About to load drives...");
-			refreshDrives(false);
+			// wrap the drive panel
+			drives = new DrivePanel(flowLayoutPanel1, "C");
+			drives.refresh();
+			drives.Changed += new DriveChanged(delegate( string drive ) {
+				currentDrive = drive.Replace(":","");
+				if( savedPaths.ContainsKey(currentDrive) )
+					currentDirectory = savedPaths[currentDrive];
+				refreshFiles();
+			});
+
 			refreshFiles();
 			this.listFiles.Focus();
 
 		}
 
-		protected override void OnClosing(CancelEventArgs e) {
-			if (this.rightChild != null && !this.rightChild.IsDisposed) {
+		protected override void OnClosing( CancelEventArgs e ) {
+			if( this.rightChild != null && !this.rightChild.IsDisposed ) {
 				this.rightChild.Close();
 			}
 			MemoryStream mem = new MemoryStream();
-			(new BinaryFormatter()).Serialize(mem,savedPaths);
+			(new BinaryFormatter()).Serialize(mem, savedPaths);
 			mem.Position = 0;
 			string s = UintEncodeBytes(mem);
-			mem.Close();
+			mem.Dispose();
 			this.config["SavedPathsMap"] = s;
-			if( favoriteFolders != null)
-				this.config["Favorites"] = String.Join(";", favoriteFolders.ToArray());
 			this.config.SaveToRegistry();
-			if ( this.isAppBarRegistered ) {
+			if( this.isAppBarRegistered ) {
 				this.UnregisterAppBar();
 			}
 			base.OnClosing(e);
 		}
 
-		protected override void OnResize(EventArgs e) {
+		protected override void OnResize( EventArgs e ) {
 			base.OnResize(e);
-			moveHandle1.Width = this.Width - 4;
-			listFiles.Columns[0].Width = this.Width - 4;
+			moveHandle1.Width = this.Width - 6;
+			listFiles.Height = this.Height - (listFiles.Top + 32);
 			Debug.Print("On Resize: {0}x{1}", this.Width, this.Height);
+			Debug.Print("List Files: {0}x{1}", listFiles.Width, listFiles.Height);
 		}
 
 		protected override CreateParams CreateParams {
@@ -467,60 +333,32 @@ namespace FileDock {
 		}
 
 		#region UintEncode/DecodeBytes
-		private string UintEncodeBytes(MemoryStream input) {
+		private string UintEncodeBytes( MemoryStream input ) {
 			StringBuilder s = new StringBuilder();
 			int b;
-			while ( (b = input.ReadByte()) != -1 ) {
+			while( (b = input.ReadByte()) != -1 ) {
 				s.AppendFormat("{0:X2}", (byte)b);
 			}
 			return s.ToString();
 		}
-		private void UintDecodeBytes(MemoryStream output, string src) {
+		private void UintDecodeBytes( MemoryStream output, string src ) {
 			StringReader r = new StringReader(src);
 			char[] buffer = new char[2];
-			while ( r.Read(buffer, 0, 2) == 2 ) {
+			while( r.Read(buffer, 0, 2) == 2 ) {
 				byte d = Byte.Parse("" + buffer[0] + buffer[1], System.Globalization.NumberStyles.AllowHexSpecifier);
 				output.WriteByte(d);
 			}
 		}
 		#endregion
 
-		#region Experiment: Path rolling
-		/* Path rolling is the mechanism that would enforce mac-like file manager behavior.
-		 * To do this, you make activating a folder spawn a new instance.
-		 * You would limit the maximum number of instances to something like 3.
-		 * Then if a new window would cross that limit, you would roll paths left instead.
-		 */
-		// this stack would be used by Instance 0, the far left bar, to track left-side overflow
-		private Stack<string> pathStack = null;
-		public void pushPathLeft(string path) {
-			if ( this.leftChild != null ) {
-				// push our current path left
-				this.leftChild.pushPathLeft(this.currentPath);
-			} else {
-				// or push it up on the stack of paths that have overflowed left
-				if ( pathStack == null ) {
-					pathStack = new Stack<string>();
-				}
-				pathStack.Push(this.currentPath);
-			}
-			// then update our current path
-			this.currentPath = path;
-		}
-		#endregion
-
-		void listFiles_KeyUp(object sender, KeyEventArgs e) {
+		void listFiles_KeyUp( object sender, KeyEventArgs e ) {
 			Debug.Print("keyUp: " + e.KeyCode.ToString());
-			switch ( e.KeyCode ) {
-				case Keys.OemQuestion:
-					searchPanel.Toggle();
-					break;
+			switch( e.KeyCode ) {
 				case Keys.F5:
 					refresh_Click(null, null);
 					break;
 				case Keys.ControlKey:
-					if (listFiles.CheckedIndices.Count == 0)
-					{
+					if( listFiles.CheckedIndices.Count == 0 ) {
 						listFiles.CheckBoxes = false;
 					}
 					break;
@@ -528,93 +366,88 @@ namespace FileDock {
 
 		}
 
-		void listFiles_KeyDown(object sender, KeyEventArgs e)
-		{
-			// Debug.Print("keyDown: " + e.KeyCode.ToString());
-			switch (e.KeyCode)
-			{
+		void listFiles_KeyDown( object sender, KeyEventArgs e ) {
+			switch( e.KeyCode ) {
 				case Keys.ControlKey:
 					listFiles.CheckBoxes = true;
 					break;
 			}
 		}
 
-		void listFiles_ItemActivate(object sender, EventArgs e)
-        {
-
-        }
-
-		private void listFiles_MouseClick(object sender, MouseEventArgs e) {
-			if ( (FileDockForm.ModifierKeys & Keys.Control) == 0
+		private void listFiles_MouseClick( object sender, MouseEventArgs e ) {
+			if( (FileDockForm.ModifierKeys & Keys.Control) == 0
 					&& (FileDockForm.ModifierKeys & Keys.Shift) == 0
 					) {
-				if ( hoveredItem != null ) {
-					if (listFiles.CheckBoxes && listFiles.CheckedItems.Contains(hoveredItem))
+				if( hoverItem != null ) {
+					if( listFiles.CheckBoxes && listFiles.CheckedItems.Contains(hoverItem) )
 						return;
 					else
-						activateFileFolder(hoveredItem);
+						activateFileFolder(hoverItem);
 				}
 			}
 		}
 
-		private ListViewItem prevHoveredItem;
-		private ListViewItem hoveredItem;
-		private ToolTip hoveredTip;
-		private void listFiles_MouseMove(object sender, MouseEventArgs e) {
-			ListViewItem newHoveredItem = listFiles.GetItemAt(e.X, e.Y);
-			if (newHoveredItem != null) {
-				if (prevHoveredItem != null && prevHoveredItem == newHoveredItem) {
+		public delegate void HoverItemChanged();
+		private ListViewItem prevHoverItem;
+		private ListViewItem hoverItem;
+		private ToolTip hoverTip;
+		private void listFiles_MouseMove( object sender, MouseEventArgs e ) {
+			ListViewItem newHoverItem = listFiles.GetItemAt(e.X, e.Y);
+			if( newHoverItem != null ) {
+				if( prevHoverItem == newHoverItem ) {
 					return;
 				}
-				prevHoveredItem = hoveredItem;
-				hoveredItem = newHoveredItem;
+				prevHoverItem = hoverItem;
+				hoverItem = newHoverItem;
+				Debug.Print("Forcing focus on listFiles");
 				SendMessage(this.Handle, 0x086, 1, 0); // force focus
-				if ( hoveredTip != null ) {
-					hoveredTip.Hide(listFiles);
-					hoveredTip.Dispose();
-					hoveredTip = null;
+				if( hoverTip != null ) {
+					hoverTip.Hide(listFiles);
+					hoverTip.Dispose();
+					hoverTip = null;
 				}
-				hoveredTip = new ToolTip(this.components);
+				hoverTip = new ToolTip(this.components);
 				Point hoverPos = this.PointToClient(e.Location);
-				hoverPos = new Point(hoverPos.X + this.Left + 35 , hoverPos.Y );
-				string hoverText = hoveredItem.Text;
-				string fname = (string)hoveredItem.Tag;
+				hoverPos = new Point(hoverPos.X + this.Left + 35, hoverPos.Y);
+				string hoverText = hoverItem.Text;
+				string fname = (string)hoverItem.Tag;
 				if( File.Exists(fname) ) {
 					FileInfo f = new FileInfo(fname);
 					double kb = f.Length / 1024.0;
 					hoverText += String.Format("\n- {0:0,0.00} kb", kb);
-					hoveredTip.Show(hoverText, listFiles, hoverPos);
+					hoverTip.Show(hoverText, listFiles, hoverPos);
 				}
 			}
-			//Debug.Print("Hovered: " + hoveredItem.Text + " prevHovered: " + (prevHoveredItem != null ? prevHoveredItem.Text : "null"));
-			if (prevHoveredItem != null) {
-				prevHoveredItem.ForeColor = Color.Black;
-				prevHoveredItem.Font = new Font(prevHoveredItem.Font, 0);
+			if( prevHoverItem != null ) {
+				prevHoverItem.BackColor = Color.White;
+				prevHoverItem.ForeColor = Color.Black;
+				prevHoverItem.Font = new Font(prevHoverItem.Font, 0);
 			}
-			if (hoveredItem != null) {
-				hoveredItem.ForeColor = Color.DarkBlue;
-				hoveredItem.Font = new Font(hoveredItem.Font, FontStyle.Bold | FontStyle.Underline);
+			if( hoverItem != null ) {
+				hoverItem.BackColor = Color.FromArgb(255, 255, 180);
+				hoverItem.ForeColor = Color.DarkBlue;
+				hoverItem.Font = new Font(hoverItem.Font, FontStyle.Bold | FontStyle.Underline);
 			}
 		}
 
-		void listFiles_MouseLeave(object sender, EventArgs e) {
-			Debug.Print("closing hoveredTip on mouse leave");
-			if ( hoveredTip != null ) {
-				hoveredTip.Hide(listFiles);
-				hoveredTip.Dispose();
-				hoveredTip = null;
+		void listFiles_MouseLeave( object sender, EventArgs e ) {
+			Debug.Print("closing hoverTip on mouse leave");
+			if( hoverTip != null ) {
+				hoverTip.Hide(listFiles);
+				hoverTip.Dispose();
+				hoverTip = null;
 			}
 		}
 
 		// when an item is first picked up:
-		private void listFiles_ItemDrag(object sender, ItemDragEventArgs e) {
+		private void listFiles_ItemDrag( object sender, ItemDragEventArgs e ) {
 			ListViewItem node = (ListViewItem)e.Item;
-			if (node != null) {
+			if( node != null ) {
 				string[] s = new string[] { (String)node.Tag };
 				// if multiple files are selected
 				if( listFiles.SelectedItems.Count > 1 ) {
 					List<string> files = new List<string>();
-					foreach ( ListViewItem item in listFiles.SelectedItems ) {
+					foreach( ListViewItem item in listFiles.SelectedItems ) {
 						files.Add((string)(item.Tag));
 					}
 					// pick up all of them for the drag
@@ -622,21 +455,21 @@ namespace FileDock {
 				}
 				DataObject data = new DataObject(DataFormats.FileDrop, s);
 				// begin the drag
-				listFiles.DoDragDrop(data, DragDropEffects.Copy | DragDropEffects.Move | DragDropEffects.Link | DragDropEffects.All | DragDropEffects.None );
+				listFiles.DoDragDrop(data, DragDropEffects.Copy | DragDropEffects.Move | DragDropEffects.Link | DragDropEffects.All | DragDropEffects.None);
 			}
 		}
 
 		// when an item is being floated over any part of the form
-		private void FileDockForm_DragOver(object sender, DragEventArgs e) {
+		private void FileDockForm_DragOver( object sender, DragEventArgs e ) {
 			bool CtrlPressed = (FileDockForm.ModifierKeys & Keys.Control) == Keys.Control;
 			bool AltPressed = (FileDockForm.ModifierKeys & Keys.Alt) == Keys.Alt;
-			if (CtrlPressed
-				&& (e.AllowedEffect & DragDropEffects.Move) == DragDropEffects.Move) {
+			if( CtrlPressed
+				&& (e.AllowedEffect & DragDropEffects.Move) == DragDropEffects.Move ) {
 				e.Effect = DragDropEffects.Move;
-			} else if (AltPressed
-				&& (e.AllowedEffect & DragDropEffects.All) == DragDropEffects.All) {
+			} else if( AltPressed
+				&& (e.AllowedEffect & DragDropEffects.All) == DragDropEffects.All ) {
 				e.Effect = DragDropEffects.All;
-			} else if ((e.AllowedEffect & DragDropEffects.Copy) == DragDropEffects.Copy) {
+			} else if( (e.AllowedEffect & DragDropEffects.Copy) == DragDropEffects.Copy ) {
 				e.Effect = DragDropEffects.Copy;
 			} else {
 				e.Effect = DragDropEffects.None;
@@ -644,19 +477,17 @@ namespace FileDock {
 		}
 
 		// when an item is actually dropped on some part of the form
-		private void FileDockForm_DragDrop(object sender, DragEventArgs e) {
-			Debug.Print("DragDrop: " + sender.ToString() + " " + e.ToString());
-			if (e.Effect == DragDropEffects.All) {
+		private void FileDockForm_DragDrop( object sender, DragEventArgs e ) {
+			if( e.Effect == DragDropEffects.All ) {
 				this.Focus();
 				// show a context menu with Copy Move options
 				Control target = (Control)sender;
 				this.contextMenu1.Show(this, 0, 0);
 				// when they make a choice, call this function again with the proper effect
-				this.contextMenu1.ItemClicked += new ToolStripItemClickedEventHandler(delegate(object _sender, ToolStripItemClickedEventArgs _e)
-				{
-					if (_e.ClickedItem.Text == "Copy") {
+				this.contextMenu1.ItemClicked += new ToolStripItemClickedEventHandler(delegate( object _sender, ToolStripItemClickedEventArgs _e ) {
+					if( _e.ClickedItem.Text == "Copy" ) {
 						e.Effect = DragDropEffects.Copy;
-					} else if (_e.ClickedItem.Text == "Move") {
+					} else if( _e.ClickedItem.Text == "Move" ) {
 						e.Effect = DragDropEffects.Move;
 					}
 					FileDockForm_DragDrop(sender, e);
@@ -666,73 +497,73 @@ namespace FileDock {
 			} else {
 				bool isFileDrop = e.Data.GetDataPresent(DataFormats.FileDrop);
 				bool isStringDrop = e.Data.GetDataPresent(DataFormats.Text);
-				if (isFileDrop) {
+				if( isFileDrop ) {
 
 					// determine what that the intended target of the drop is
 					Point clt = listFiles.PointToClient(new Point(e.X, e.Y));
 					ListViewItem target = listFiles.GetItemAt(clt.X, clt.Y);
 					string targetDir = this.currentPath;
 					// if it was dropped on a folder node directly
-					if (target != null && target.ImageIndex == 0) {
+					if( target != null && target.ImageIndex == 0 ) {
 						// then target that node directly
 						targetDir = target.Name;
 					}
 
-					foreach (string srcFile in (string[])e.Data.GetData(DataFormats.FileDrop)) {
+					foreach( string srcFile in (string[])e.Data.GetData(DataFormats.FileDrop) ) {
 						Debug.Print("Got dropped file: " + srcFile + " on target: " + targetDir);
 						// if the user did a tiny mis-drag, of an item onto itself, count it as an activate instead
-						if (targetDir == srcFile) {
+						if( targetDir == srcFile ) {
 							activateFileFolder(target);
 							return;
 						}
 						// if we they are dragging a directory to us
-						if (Directory.Exists(srcFile)) {
+						if( Directory.Exists(srcFile) ) {
 							// build the new directory name
 							string[] tmp = srcFile.Split(Path.DirectorySeparatorChar);
 							string dirName = tmp[tmp.Length - 1];
 							string newTargetDir = Path.Combine(targetDir, dirName);
-							if (e.Effect == DragDropEffects.Copy) {
+							if( e.Effect == DragDropEffects.Copy ) {
 								// copy *.* from the source to the new directory
-								using (new ActionHelper(this, sender, "Copy")) {
+								using( new ActionHelper(this, sender, "Copy") ) {
 									try {
 										copyDirectory(srcFile, newTargetDir);
-									} catch ( UnauthorizedAccessException ) {
+									} catch( UnauthorizedAccessException ) {
 										MessageBox.Show("Not Allowed.");
 									}
 								}
-							} else if (e.Effect == DragDropEffects.Move) {
+							} else if( e.Effect == DragDropEffects.Move ) {
 								// move *.* from the source dir to the target dir
-								using (new ActionHelper(this, sender, "Move")) {
+								using( new ActionHelper(this, sender, "Move") ) {
 									try {
 										Directory.Move(srcFile, newTargetDir);
-									} catch ( UnauthorizedAccessException ) {
+									} catch( UnauthorizedAccessException ) {
 										MessageBox.Show("Not Allowed.");
 									}
 								}
 							} else {
 								MessageBox.Show("Unknown directory effect: " + e.ToString());
 							}
-						} else if (File.Exists(srcFile)) {
+						} else if( File.Exists(srcFile) ) {
 							string newFile = Path.Combine(targetDir, Path.GetFileName(srcFile));
-							if (newFile != srcFile) {
-								if (e.Effect == DragDropEffects.Copy) {
-									using (new ActionHelper(this, sender, "Copy")) {
+							if( newFile != srcFile ) {
+								if( e.Effect == DragDropEffects.Copy ) {
+									using( new ActionHelper(this, sender, "Copy") ) {
 										try {
 											File.Copy(Path.GetFullPath(srcFile), newFile);
-										} catch ( UnauthorizedAccessException ) {
+										} catch( UnauthorizedAccessException ) {
 											MessageBox.Show("Not Allowed.");
-										} catch ( IOException ex ) {
+										} catch( IOException ex ) {
 											MessageBox.Show("IOException: " + ex.ToString());
 										}
 									}
-								} else if (e.Effect == DragDropEffects.Move) {
-									using (new ActionHelper(this, sender, "Move")) {
+								} else if( e.Effect == DragDropEffects.Move ) {
+									using( new ActionHelper(this, sender, "Move") ) {
 										Debug.Print("Moving " + srcFile + " " + newFile);
 										try {
 											File.Move(Path.GetFullPath(srcFile), newFile);
-										} catch ( UnauthorizedAccessException ) {
+										} catch( UnauthorizedAccessException ) {
 											MessageBox.Show("Not Allowed.");
-										} catch ( IOException ex ) {
+										} catch( IOException ex ) {
 											MessageBox.Show("IOException: " + ex.ToString());
 										}
 									}
@@ -744,21 +575,24 @@ namespace FileDock {
 							MessageBox.Show("No such file or directory: " + srcFile);
 						}
 					}
-				} else if (isStringDrop) {
+				} else if( isStringDrop ) {
 					Debug.Print("Got dropped text: " + e.Data.GetData(DataFormats.Text));
 				}
 			}
 		}
 
 		// a helper, since for some reason this is missing from the windows apis
-		private void copyDirectory(string Src, string Dst) {
+		private void copyDirectory( string Src, string Dst ) {
+			if( Src.Equals(Dst) )
+				return;
 			String[] Files;
-			if (Dst[Dst.Length - 1] != Path.DirectorySeparatorChar)
+			if( Dst[Dst.Length - 1] != Path.DirectorySeparatorChar )
 				Dst += Path.DirectorySeparatorChar;
-			if (!Directory.Exists(Dst)) Directory.CreateDirectory(Dst);
+			if( !Directory.Exists(Dst) )
+				Directory.CreateDirectory(Dst);
 			Files = Directory.GetFileSystemEntries(Src);
-			foreach (string Element in Files) {
-				if (Directory.Exists(Element))
+			foreach( string Element in Files ) {
+				if( Directory.Exists(Element) )
 					copyDirectory(Element, Dst + Path.GetFileName(Element));
 				else
 					File.Copy(Element, Dst + Path.GetFileName(Element), true);
@@ -766,112 +600,61 @@ namespace FileDock {
 		}
 
 		public void closeAllRightChildren() {
-			if ( this.rightChild != null ) {
+			if( this.rightChild != null ) {
 				this.rightChild.closeAllRightChildren();
 				this.rightChild.Close();
 			}
 		}
 
 		// when the user has indicated they want to launch this file or open this directory
-		private void activateFileFolder(ListViewItem node) {
+		private void activateFileFolder( ListViewItem node ) {
 			string save_dir = currentDirectory;
 			try {
 				string new_dir = (String)node.Tag;
-				if (new_dir == ".") {	// do nothing
+				if( new_dir == "." ) {	// do nothing
 					return;
 				} else if( new_dir == "..refresh.." ) {
 					refreshFiles();
 					return;
-				} else if (new_dir == "..") {
-					if (this.currentDirectory.Contains("\\")) {
+				} else if( new_dir == ".." ) {
+					if( this.currentDirectory.Contains("\\") ) {
 						//remove the last path element from the current directory
 						new_dir = Regex.Replace(this.currentDirectory, "\\\\[^\\\\]+$", "");
 					} else {
 						new_dir = "";
 					}
 				}
-
-				// do the actual state change
-				if ( false ) { // if we want to load folders mac-style, scrolling them out to the right
-					// if we already have a right child
-					if ( this.rightChild != null && !this.rightChild.IsDisposed ) {
-						this.rightChild.currentPath = new_dir;
-						this.rightChild.closeAllRightChildren();
-					} else {
-						this.rightChild = new FileDockForm(this);
-						this.rightChild.Show();
-						this.rightChild.currentPath = new_dir;
-					}
-				} else {
-					this.currentDirectory = new_dir;
-				}
-			} catch (Exception err) {
+				this.currentDirectory = new_dir;
+			} catch( Exception err ) {
 				MessageBox.Show("Error: " + err.ToString() + " this.currentDirectory: " + this.currentDirectory);
 				this.currentDirectory = "";
 			}
-			if (currentDirectory.Contains(":\\")) {
+			if( currentDirectory.Contains(":\\") ) {
 				currentDirectory = currentDirectory.Substring(3);
 			}
-			if (Directory.Exists(currentPath)) {
+			if( Directory.Exists(currentPath) ) {
 				refreshFiles();
 			} else {
 				Debug.Print("Executing");
 				startFileWithDefaultHandler(currentPath);
-				// cover the loading time with a little bounce animation of the clicked item
-				Form floater = new Form();
-				floater.FormBorderStyle = FormBorderStyle.None;
-				floater.Size = new Size(200, (int)(floater.Font.SizeInPoints) + 4);
-				floater.Font = node.Font;
-				floater.MinimumSize = new Size(200, (int)(floater.Font.SizeInPoints) + 4);
-				//floater.MaximumSize = new Size(0, (int)(floater.Font.SizeInPoints) + 4);
-				floater.ShowInTaskbar = false;
-				floater.Paint += new PaintEventHandler(delegate(object sender, PaintEventArgs e)
-				{
-					SizeF size = e.Graphics.MeasureString(node.Text, floater.Font);
-					floater.Size = new Size((int)(size.Width + 1), (int)(floater.Font.Size * 1.3) + 7);
-					e.Graphics.FillRectangle(new SolidBrush(Color.LightBlue),floater.Left,floater.Top,floater.Width,floater.Height);
-					e.Graphics.DrawString(node.Text, floater.Font, new SolidBrush(Color.Black), new Point(0, 0));
-				});
-				floater.Show(this);
-				floater.Location = node.ListView.PointToScreen(node.Bounds.Location);
-				floater.TopMost = true;
-				floater.Update();
-
-
-				while (floater.Opacity > 0.001) {
-					floater.Opacity -= .10;
-					if (new Random().Next(0, 1000) > 300) floater.Top -= 1;
-					if (floater.Opacity < .7) {
-						floater.Font = new Font(floater.Font.FontFamily, floater.Font.SizeInPoints - .3f);
-					} else {
-						floater.Font = new Font(floater.Font.FontFamily, floater.Font.SizeInPoints + .3f);
-					}
-					floater.Left += 1;
-					floater.Update();
-					System.Threading.Thread.Sleep(30);
-				}
-
-				floater.Hide();
-				floater.Dispose();
-
 				currentDirectory = save_dir;
 			}
 		}
 
 		// launch a file using the 'start' command-line tool to do the registry/mime lookup
-		private void startFileWithDefaultHandler(string filename) {
+		private void startFileWithDefaultHandler( string filename ) {
 			execCmd(@"C:\WINDOWS\System32\cmd.exe", "/c start \"start\" \"" + (filename) + "\"", null, true);
 		}
 
 		// execute something in windows
-		private void execCmd(string cmd, string arguments, string workingDirectory, bool hidden) {
+		private void execCmd( string cmd, string arguments, string workingDirectory, bool hidden ) {
 			ProcessStartInfo si = new ProcessStartInfo(cmd);
 			si.Arguments = arguments;
-			if (hidden) {
+			if( hidden ) {
 				si.CreateNoWindow = true;
 				si.WindowStyle = ProcessWindowStyle.Hidden;
 			}
-			if (workingDirectory != null) {
+			if( workingDirectory != null ) {
 				si.WorkingDirectory = workingDirectory;
 			} else {
 				si.WorkingDirectory = this.currentPath;
@@ -881,80 +664,23 @@ namespace FileDock {
 			Debug.Print("Exec returned");
 		}
 
-		// the search button
-		public void search_Click(object sender, EventArgs e) {
-			searchPanel.Toggle();
-		}
-
-		// the favorites button
-		private void favorites_Click(object sender, EventArgs e) {
-			this.favPanel.Toggle();
-		}
-		private void favorites_DragEnter(object sender, DragEventArgs e) {
-			bool isFileDrop = e.Data.GetDataPresent(DataFormats.FileDrop);
-			bool isStringDrop = e.Data.GetDataPresent(DataFormats.Text);
-			if ( isFileDrop || isStringDrop ) {
-				e.Effect = DragDropEffects.All;
-			} else {
-				e.Effect = DragDropEffects.None;
-			}
-		}
-		private void favorites_DragDrop(object sender, DragEventArgs e) {
-			if ( e.Effect == DragDropEffects.All ) {
-				bool isStringDrop = e.Data.GetDataPresent(DataFormats.Text);
-				bool isFileDrop = e.Data.GetDataPresent(DataFormats.FileDrop);
-				string srcFile = null;
-				if ( isFileDrop ) {
-					srcFile = ((string[])(e.Data.GetData(DataFormats.FileDrop)))[0];
-				} else if ( isStringDrop ) {
-					srcFile = (string)e.Data.GetData(DataFormats.Text);
-				}
-				addFolderToFavorites(srcFile);
-			}
-		}
-
-		protected List<string> favoriteFolders;
-		public void addFolderToFavorites(string srcFile) {
-			if ( !Directory.Exists(srcFile) ) {
-				Debug.Print("Directory not found, trying to trim: " + srcFile);
-				srcFile = Regex.Replace(srcFile, "\\\\[^\\\\]+$", "");
-			}
-			if ( !Directory.Exists(srcFile) ) {
-				MessageBox.Show("No such directory: " + srcFile);
-				return;
-			}
-			if ( !favoriteFolders.Contains(srcFile) ) {
-				favoriteFolders.Add(srcFile);
-			}
-		}
-
-		// create directory button
-		private void createDir_Click(object sender, EventArgs e) {
-			createDirPanel.Toggle();
-		}
-
-		// the create file button
-		private void createFile_Click(object sender, EventArgs e) {
-			createFilePanel.Toggle();
-		}
-
 		// the refresh button
-		private void refresh_Click(object sender, EventArgs e) {
-			refreshDrives(false);
+		private void refresh_Click( object sender, EventArgs e ) {
+			drives.refresh();
 			refreshFiles();
 		}
 
 		// the close button
-		private void close_Click(object sender, EventArgs e) {
+		private void close_Click( object sender, EventArgs e ) {
 			fileSystemWatcher1.Dispose();
 			fileSystemWatcher1 = null;
 			this.Close();
 		}
 
 		// the clone button
-		protected void clone_Click(object sender, EventArgs e) {
+		protected void clone_Click( object sender, EventArgs e ) {
 			// if we already have a right child
-			if (this.rightChild != null && !this.rightChild.IsDisposed) {
+			if( this.rightChild != null && !this.rightChild.IsDisposed ) {
 				this.rightChild.clone_Click(sender, e);
 			} else {
 				this.rightChild = new FileDockForm(this);
@@ -962,20 +688,20 @@ namespace FileDock {
 				this.rightChild.Show();
 			}
 		}
-		private void clone_DragDrop(object sender, DragEventArgs e) {
-			if ( e.Effect == DragDropEffects.All ) {
+		private void clone_DragDrop( object sender, DragEventArgs e ) {
+			if( e.Effect == DragDropEffects.All ) {
 				bool isFileDrop = e.Data.GetDataPresent(DataFormats.FileDrop);
 				bool isStringDrop = e.Data.GetDataPresent(DataFormats.Text);
 				string srcFile = "";
-				if ( isFileDrop ) {
+				if( isFileDrop ) {
 					srcFile = ((string[])(e.Data.GetData(DataFormats.FileDrop)))[0];
-				} else if ( isStringDrop ) {
+				} else if( isStringDrop ) {
 					srcFile = (string)e.Data.GetData(DataFormats.Text);
 				}
-				if ( !Directory.Exists(srcFile) ) {
+				if( !Directory.Exists(srcFile) ) {
 					srcFile = Regex.Replace(srcFile, "\\\\[^\\\\]+$", "");
 				}
-				if ( !Directory.Exists(srcFile) ) {
+				if( !Directory.Exists(srcFile) ) {
 					MessageBox.Show("No such folder: " + srcFile);
 					return;
 				}
@@ -985,42 +711,10 @@ namespace FileDock {
 				MessageBox.Show("huh?");
 			}
 		}
-		private void clone_DragEnter(object sender, DragEventArgs e) {
+		private void clone_DragEnter( object sender, DragEventArgs e ) {
 			bool isFileDrop = e.Data.GetDataPresent(DataFormats.FileDrop);
 			bool isStringDrop = e.Data.GetDataPresent(DataFormats.Text);
-			if ( isFileDrop || isStringDrop ) {
-				e.Effect = DragDropEffects.All;
-			} else {
-				e.Effect = DragDropEffects.None;
-			}
-		}
-
-		// the zip button (and its droppable effects)
-		private void sevenZip_Click(object sender, EventArgs e) {
-			execCmd(@"C:\Program Files\7-Zip\7zFM.exe", "\"" + this.currentPath + "\"", null, false);
-		}
-		private void sevenZip_DragDrop(object sender, DragEventArgs e) {
-			if (e.Effect == DragDropEffects.All) {
-				bool isFileDrop = e.Data.GetDataPresent(DataFormats.FileDrop);
-				bool isStringDrop = e.Data.GetDataPresent(DataFormats.Text);
-				if (isFileDrop) {
-					foreach (string srcFile in (string[])e.Data.GetData(DataFormats.FileDrop)) {
-						Debug.Print(Directory.GetCurrentDirectory());
-						execCmd(@"7zG.exe", "x \"" + srcFile + "\" -o\"" + this.currentPath + "\" -r", Directory.GetCurrentDirectory(), false);
-					}
-				} else if (isStringDrop) {
-					string srcFile = (string)e.Data.GetData(DataFormats.Text);
-					Debug.Print(Directory.GetCurrentDirectory());
-					execCmd(@"7zG.exe", "x \"" + srcFile + "\" -o\"" + this.currentPath + "\" -r", Directory.GetCurrentDirectory(), false);
-				}
-			} else {
-				MessageBox.Show("huh?");
-			}
-		}
-		private void sevenZip_DragEnter(object sender, DragEventArgs e) {
-			bool isFileDrop = e.Data.GetDataPresent(DataFormats.FileDrop);
-			bool isStringDrop = e.Data.GetDataPresent(DataFormats.Text);
-			if (isFileDrop || isStringDrop) {
+			if( isFileDrop || isStringDrop ) {
 				e.Effect = DragDropEffects.All;
 			} else {
 				e.Effect = DragDropEffects.None;
@@ -1028,33 +722,33 @@ namespace FileDock {
 		}
 
 		// the delete button (and its droppable effects)
-		private void delete_Click(object sender, EventArgs e) {
+		private void delete_Click( object sender, EventArgs e ) {
 			MessageBox.Show("Drop files here to delete them.");
 		}
-		private void delete_DragEnter(object sender, DragEventArgs e) {
+		private void delete_DragEnter( object sender, DragEventArgs e ) {
 			bool isFileDrop = e.Data.GetDataPresent(DataFormats.FileDrop);
 			bool isStringDrop = e.Data.GetDataPresent(DataFormats.Text);
-			if (isFileDrop || isStringDrop) {
+			if( isFileDrop || isStringDrop ) {
 				e.Effect = DragDropEffects.Copy;
 			} else {
 				e.Effect = DragDropEffects.None;
 			}
 		}
-		private void delete_DragDrop(object sender, DragEventArgs e) {
-			if (e.Effect == DragDropEffects.Copy) {
+		private void delete_DragDrop( object sender, DragEventArgs e ) {
+			if( e.Effect == DragDropEffects.Copy ) {
 				bool isFileDrop = e.Data.GetDataPresent(DataFormats.FileDrop);
 				bool isStringDrop = e.Data.GetDataPresent(DataFormats.Text);
-				if (isFileDrop) {
+				if( isFileDrop ) {
 					string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
 
-					if (MessageBox.Show("Are you sure you want to delete:\n " + String.Join("\n",files), "Confirm Delete", MessageBoxButtons.YesNo) == DialogResult.Yes) {
-						foreach (string srcFile in files) {
+					if( MessageBox.Show("Are you sure you want to delete:\n " + String.Join("\n", files), "Confirm Delete", MessageBoxButtons.YesNo) == DialogResult.Yes ) {
+						foreach( string srcFile in files ) {
 							deleteFileOrDirectory(srcFile);
 						}
 					}
-				} else if (isStringDrop) {
+				} else if( isStringDrop ) {
 					string srcFile = (string)e.Data.GetData(DataFormats.Text);
-					if (MessageBox.Show("Are you sure you want to delete " + srcFile + "?", "Confirm Delete", MessageBoxButtons.YesNo) == DialogResult.Yes) {
+					if( MessageBox.Show("Are you sure you want to delete " + srcFile + "?", "Confirm Delete", MessageBoxButtons.YesNo) == DialogResult.Yes ) {
 						deleteFileOrDirectory(srcFile);
 					}
 				}
@@ -1063,22 +757,26 @@ namespace FileDock {
 			}
 		}
 		// a helper for deleting things safely
-		private void deleteFileOrDirectory(string path) {
+		private void deleteFileOrDirectory( string path ) {
+			MessageBox.Show("Disabled.");
+			return;
+			/*
 			Debug.Print("delete: " + path);
-			if (Directory.Exists(path)) {
+			if( Directory.Exists(path) ) {
 				Directory.Delete(path, true);
 				removeListViewItemUsingAnimation(path);
-			} else if (File.Exists(path)) {
+			} else if( File.Exists(path) ) {
 				File.Delete(path);
 				removeListViewItemUsingAnimation(path);
 			} else {
 				MessageBox.Show("Could not find file/directory: " + path);
 			}
+			*/
 		}
 
-		private void removeListViewItemUsingAnimation(string path) {
-			foreach ( ListViewItem item in listFiles.Items ) {
-				if ( (string)(item.Tag) == path ) {
+		private void removeListViewItemUsingAnimation( string path ) {
+			foreach( ListViewItem item in listFiles.Items ) {
+				if( (string)(item.Tag) == path ) {
 					listFiles.Focus();
 					item.Selected = false;
 					item.ForeColor = Color.Red;
@@ -1092,10 +790,10 @@ namespace FileDock {
 		}
 
 		// the config/options button
-		private void config_Click(object sender, EventArgs e) {
-			if (configForm.Visible) {
+		private void config_Click( object sender, EventArgs e ) {
+			if( configForm.Visible ) {
 				configForm.Focus();
-			} else if (!configForm.IsDisposed) {
+			} else if( !configForm.IsDisposed ) {
 				configForm.Show(this);
 				configForm.Focus();
 			} else {
@@ -1109,27 +807,27 @@ namespace FileDock {
 			refresh_Click(null, null);
 			FileDockForm cursor = this.leftChild;
 			// walk left refreshing
-			while ( cursor != null && !cursor.IsDisposed ) {
+			while( cursor != null && !cursor.IsDisposed ) {
 				cursor.refresh_Click(null, null);
 				cursor = cursor.leftChild;
 			}
 			// then walk right
 			cursor = this.rightChild;
-			while ( cursor != null && !cursor.IsDisposed ) {
+			while( cursor != null && !cursor.IsDisposed ) {
 				cursor.refresh_Click(null, null);
 				cursor = cursor.rightChild;
 			}
 		}
 
-		private void vim_DragDrop(object sender, DragEventArgs e) {
-			if ( e.Effect == DragDropEffects.All ) {
+		private void vim_DragDrop( object sender, DragEventArgs e ) {
+			if( e.Effect == DragDropEffects.All ) {
 				bool isFileDrop = e.Data.GetDataPresent(DataFormats.FileDrop);
 				bool isStringDrop = e.Data.GetDataPresent(DataFormats.Text);
-				if ( isFileDrop ) {
-					foreach ( string srcFile in (string[])e.Data.GetData(DataFormats.FileDrop) ) {
+				if( isFileDrop ) {
+					foreach( string srcFile in (string[])e.Data.GetData(DataFormats.FileDrop) ) {
 						EditFile(srcFile);
 					}
-				} else if ( isStringDrop ) {
+				} else if( isStringDrop ) {
 					string srcFile = (string)e.Data.GetData(DataFormats.Text);
 					EditFile(srcFile);
 				}
@@ -1137,67 +835,69 @@ namespace FileDock {
 				MessageBox.Show("Drop of unknown effect.");
 			}
 		}
-		private void vim_DragEnter(object sender, DragEventArgs e) {
+		private void vim_DragEnter( object sender, DragEventArgs e ) {
 			bool isFileDrop = e.Data.GetDataPresent(DataFormats.FileDrop);
 			bool isStringDrop = e.Data.GetDataPresent(DataFormats.Text);
-			if (isFileDrop || isStringDrop) {
+			if( isFileDrop || isStringDrop ) {
 				e.Effect = DragDropEffects.All;
 			} else {
 				e.Effect = DragDropEffects.None;
 			}
 		}
-		private void vim_Click(object sender, EventArgs e) {
+		private void vim_Click( object sender, EventArgs e ) {
 			EditFile("newfile");
 		}
-
-		private void EditFile(string file)
-		{
-			try
-			{
-				execCmd(this.config["VimLocation"], "--remote-tab-silent \"" + file + "\"", this.currentPath, false);
+		private void listFiles_ItemActivate( object sender, EventArgs e ) {
+			foreach( ListViewItem item in listFiles.SelectedItems ) {
+				activateFileFolder(item);
 			}
-			catch (Exception ex)
-			{
-				MessageBox.Show("Failed to launch VIM: " + ex.ToString());
+		}
+
+		private void EditFile( string file ) {
+			try {
+				execCmd(this.config["VimLocation"], "--remote-tab-silent \"" + file + "\"", this.currentPath, false);
+			} catch( Exception ex ) {
+				MessageBox.Show("Failed to launch VIM: " + ex.Message);
 			}
 		}
 
 		public int InstanceIndex;
 		// returns what position we are at in the leftChild/rightChild linked list
 		private int getInstanceIndex() {
-			if ( leftChild == null ) {
+			if( leftChild == null ) {
 				return 0;
 			} else {
 				return this.leftChild.getInstanceIndex() + 1;
 			}
 		}
 
-		private void NoFocusAllowed(object sender, EventArgs e) {
+		private void NoFocusAllowed( object sender, EventArgs e ) {
+			Debug.Print("Forcing focus on listFiles...");
 			this.listFiles.Focus();
 		}
 
-		private string AbbreviatePath(string path, Font font, float maxWidth) {
+		private string AbbreviatePath( string path, Font font, float maxWidth ) {
 			string text = path;
 			int maxLen = text.Length;
-			while ( TextRenderer.MeasureText(text, font).Width > maxWidth ) {
+			while( TextRenderer.MeasureText(text, font).Width > maxWidth ) {
 				maxLen -= 1;
 				text = AbbreviatePath(path, maxLen);
 			}
 			return text;
 		}
 
-		private string AbbreviatePath(string path, int maxLen) {
+		private string AbbreviatePath( string path, int maxLen ) {
 			string ret = "";
-			if ( path.Length > maxLen ) {
+			if( path.Length > maxLen ) {
 				string[] elems = path.Split('\\');
 
 				maxLen -= 10; // reserve a minimum 10 chars for the lead-in we will add later
 				int loadIndex = 1;
 				string last = elems[elems.Length - loadIndex];
-				while ( last.Length < maxLen && (loadIndex < (elems.Length - 2)) ) {
+				while( last.Length < maxLen && (loadIndex < (elems.Length - 2)) ) {
 					last = elems[elems.Length - (++loadIndex)] + "\\" + last;
 				}
-				if ( last.Length > maxLen ) {
+				if( last.Length > maxLen ) {
 					int halfMax = maxLen >> 1; // divide by 2 (we will display the first and last equal chunk of the last path element)
 					ret += "\\" + last.Substring(0, halfMax) + "...";
 					ret += last.Substring(last.Length - halfMax, halfMax);
@@ -1205,7 +905,7 @@ namespace FileDock {
 					ret += "\\" + last;
 				}
 				maxLen += 8; // put the space back for the lead-in
-				if ( elems[1].Length <= Math.Abs(maxLen - ret.Length) ) {
+				if( elems[1].Length <= Math.Abs(maxLen - ret.Length) ) {
 					ret = elems[0] + "\\" + elems[1] + ret;
 				} else {
 					ret = elems[0] + "\\" + elems[1].Substring(0, Math.Abs(maxLen - ret.Length)) + "..." + ret;
@@ -1249,17 +949,13 @@ namespace FileDock {
 		}
 
 		[DllImport("user32.dll", CharSet = CharSet.Auto)]
-		public static extern int SendMessage(IntPtr handle, int messg, int wparam, int lparam);
+		public static extern int SendMessage( IntPtr handle, int messg, int wparam, int lparam );
 
-
-		/// <summary>
-		/// Sets Double_Buffering and BorderSelect style
-		/// </summary>
+		// Sets Double_Buffering and BorderSelect style
 		public void SetExStyles() {
 			LVS_EX styles = (LVS_EX)SendMessage(listFiles.Handle, (int)LVM.LVM_GETEXTENDEDLISTVIEWSTYLE, 0, 0);
 			styles |= LVS_EX.LVS_EX_DOUBLEBUFFER | LVS_EX.LVS_EX_BORDERSELECT;
 			SendMessage(listFiles.Handle, (int)LVM.LVM_SETEXTENDEDLISTVIEWSTYLE, 0, (int)styles);
-
 		}
 
 		#endregion
@@ -1270,27 +966,31 @@ namespace FileDock {
 		private FileDockForm form;
 		private string type;
 		private object sender;
-		public ActionHelper(FileDockForm f, object sender, string type) {
-			f.Cursor = Cursors.WaitCursor;
-			if (type == "Copy") {
+		public ActionHelper( FileDockForm parent, object sender, string type ) {
+			parent.Cursor = Cursors.WaitCursor;
+			if( type == "Copy" ) {
 				//f.StatusText = "Copying...";
-				f.Update();
-			} else if (type == "Move") {
+				parent.Update();
+			} else if( type == "Move" ) {
 				//f.StatusText = "Moving...";
-				f.Update();
+				parent.Update();
 			}
-			this.form = f;
+			this.form = parent;
 			this.type = type;
 			this.sender = sender;
 		}
-		public void Dispose() {
-			if (this.type == "Copy") {
+		public void Dispose() { this.Dispose(true); }
+		public void Dispose( bool disposing ) {
+			if( this.type == "Copy" ) {
 				//form.StatusText = "Copied";
-			} else if (this.type == "Move") {
+			} else if( this.type == "Move" ) {
 				//form.StatusText = "Moved";
 			}
 			this.form.Cursor = Cursors.Default;
 			form.refreshAllInstances();
+			this.form = null;
+			this.type = null;
+			this.sender = null;
 		}
 	}
 

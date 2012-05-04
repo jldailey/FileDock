@@ -17,6 +17,7 @@ namespace FileDock
             {
                 components.Dispose();
             }
+						this.listSem.Close();
             base.Dispose(disposing);
         }
 
@@ -41,18 +42,22 @@ namespace FileDock
 			this.toolStripMenuItem2 = new System.Windows.Forms.ToolStripMenuItem();
 			this.flowLayoutPanel1 = new System.Windows.Forms.FlowLayoutPanel();
 			this.button11 = new System.Windows.Forms.Button();
-			this.button10 = new System.Windows.Forms.Button();
 			this.button8 = new System.Windows.Forms.Button();
 			this.button7 = new System.Windows.Forms.Button();
 			this.button1 = new System.Windows.Forms.Button();
 			this.button9 = new System.Windows.Forms.Button();
 			this.button6 = new System.Windows.Forms.Button();
 			this.button4 = new System.Windows.Forms.Button();
-			this.button3 = new System.Windows.Forms.Button();
 			this.button2 = new System.Windows.Forms.Button();
+			this.flowLayoutPanel3 = new System.Windows.Forms.FlowLayoutPanel();
+			this.flowLayoutPanel2 = new System.Windows.Forms.FlowLayoutPanel();
+			this.flowLayoutPanel4 = new System.Windows.Forms.FlowLayoutPanel();
 			this.moveHandle1 = new FileDock.MoveHandle();
 			((System.ComponentModel.ISupportInitialize)(this.fileSystemWatcher1)).BeginInit();
 			this.contextMenu1.SuspendLayout();
+			this.flowLayoutPanel3.SuspendLayout();
+			this.flowLayoutPanel2.SuspendLayout();
+			this.flowLayoutPanel4.SuspendLayout();
 			this.SuspendLayout();
 			// 
 			// fileSystemWatcher1
@@ -64,12 +69,9 @@ namespace FileDock
 			// 
 			this.listFiles.Activation = System.Windows.Forms.ItemActivation.OneClick;
 			this.listFiles.AllowDrop = true;
-			this.listFiles.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
 			this.listFiles.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.columnHeader1});
-			this.listFiles.Font = new System.Drawing.Font("Lucida Console", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.listFiles.Font = new System.Drawing.Font("Courier New", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.listFiles.FullRowSelect = true;
 			listViewGroup1.Header = "Folders";
 			listViewGroup1.Name = "listViewGroup1";
@@ -81,9 +83,10 @@ namespace FileDock
             listViewGroup1,
             listViewGroup2,
             listViewGroup3});
-			this.listFiles.Location = new System.Drawing.Point(2, 111);
+			this.listFiles.Location = new System.Drawing.Point(0, 26);
+			this.listFiles.Margin = new System.Windows.Forms.Padding(0);
 			this.listFiles.Name = "listFiles";
-			this.listFiles.Size = new System.Drawing.Size(202, 397);
+			this.listFiles.Size = new System.Drawing.Size(175, 416);
 			this.listFiles.TabIndex = 12;
 			this.listFiles.UseCompatibleStateImageBehavior = false;
 			this.listFiles.View = System.Windows.Forms.View.Details;
@@ -121,11 +124,12 @@ namespace FileDock
 			// 
 			this.flowLayoutPanel1.AutoSize = true;
 			this.flowLayoutPanel1.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-			this.flowLayoutPanel1.Location = new System.Drawing.Point(2, 9);
-			this.flowLayoutPanel1.MaximumSize = new System.Drawing.Size(180, 0);
-			this.flowLayoutPanel1.MinimumSize = new System.Drawing.Size(180, 70);
+			this.flowLayoutPanel1.Location = new System.Drawing.Point(0, 6);
+			this.flowLayoutPanel1.Margin = new System.Windows.Forms.Padding(0);
+			this.flowLayoutPanel1.MaximumSize = new System.Drawing.Size(175, 0);
+			this.flowLayoutPanel1.MinimumSize = new System.Drawing.Size(175, 20);
 			this.flowLayoutPanel1.Name = "flowLayoutPanel1";
-			this.flowLayoutPanel1.Size = new System.Drawing.Size(180, 70);
+			this.flowLayoutPanel1.Size = new System.Drawing.Size(175, 20);
 			this.flowLayoutPanel1.TabIndex = 11;
 			this.flowLayoutPanel1.Enter += new System.EventHandler(this.NoFocusAllowed);
 			// 
@@ -137,7 +141,8 @@ namespace FileDock
 			this.button11.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
 			this.button11.FlatAppearance.BorderSize = 0;
 			this.button11.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-			this.button11.Location = new System.Drawing.Point(158, 85);
+			this.button11.Location = new System.Drawing.Point(0, 58);
+			this.button11.Margin = new System.Windows.Forms.Padding(0, 3, 0, 3);
 			this.button11.Name = "button11";
 			this.button11.Size = new System.Drawing.Size(20, 20);
 			this.button11.TabIndex = 20;
@@ -148,26 +153,6 @@ namespace FileDock
 			this.button11.DragEnter += new System.Windows.Forms.DragEventHandler(this.vim_DragEnter);
 			this.button11.Enter += new System.EventHandler(this.NoFocusAllowed);
 			// 
-			// button10
-			// 
-			this.button10.AllowDrop = true;
-			this.button10.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-			this.button10.BackgroundImage = global::FileDock.Properties.Resources.shell32_44;
-			this.button10.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-			this.button10.FlatAppearance.BorderSize = 0;
-			this.button10.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-			this.button10.Location = new System.Drawing.Point(42, 85);
-			this.button10.Margin = new System.Windows.Forms.Padding(0);
-			this.button10.Name = "button10";
-			this.button10.Size = new System.Drawing.Size(20, 20);
-			this.button10.TabIndex = 18;
-			this.button10.TabStop = false;
-			this.button10.UseVisualStyleBackColor = true;
-			this.button10.Click += new System.EventHandler(this.favorites_Click);
-			this.button10.DragDrop += new System.Windows.Forms.DragEventHandler(this.favorites_DragDrop);
-			this.button10.DragEnter += new System.Windows.Forms.DragEventHandler(this.favorites_DragEnter);
-			this.button10.Enter += new System.EventHandler(this.NoFocusAllowed);
-			// 
 			// button8
 			// 
 			this.button8.AllowDrop = true;
@@ -176,7 +161,8 @@ namespace FileDock
 			this.button8.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
 			this.button8.FlatAppearance.BorderSize = 0;
 			this.button8.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-			this.button8.Location = new System.Drawing.Point(184, 31);
+			this.button8.Location = new System.Drawing.Point(0, 32);
+			this.button8.Margin = new System.Windows.Forms.Padding(0, 3, 0, 3);
 			this.button8.Name = "button8";
 			this.button8.Size = new System.Drawing.Size(20, 20);
 			this.button8.TabIndex = 14;
@@ -195,7 +181,8 @@ namespace FileDock
 			this.button7.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
 			this.button7.FlatAppearance.BorderSize = 0;
 			this.button7.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-			this.button7.Location = new System.Drawing.Point(132, 85);
+			this.button7.Location = new System.Drawing.Point(0, 136);
+			this.button7.Margin = new System.Windows.Forms.Padding(0, 3, 0, 3);
 			this.button7.Name = "button7";
 			this.button7.Size = new System.Drawing.Size(20, 20);
 			this.button7.TabIndex = 13;
@@ -210,14 +197,13 @@ namespace FileDock
 			this.button1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
 			this.button1.FlatAppearance.BorderSize = 0;
 			this.button1.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-			this.button1.Location = new System.Drawing.Point(82, 85);
-			this.button1.Margin = new System.Windows.Forms.Padding(0);
+			this.button1.Location = new System.Drawing.Point(0, 84);
+			this.button1.Margin = new System.Windows.Forms.Padding(0, 3, 0, 3);
 			this.button1.Name = "button1";
 			this.button1.Size = new System.Drawing.Size(20, 20);
 			this.button1.TabIndex = 17;
 			this.button1.TabStop = false;
 			this.button1.UseVisualStyleBackColor = true;
-			this.button1.Click += new System.EventHandler(this.createFile_Click);
 			this.button1.Enter += new System.EventHandler(this.NoFocusAllowed);
 			// 
 			// button9
@@ -226,14 +212,13 @@ namespace FileDock
 			this.button9.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
 			this.button9.FlatAppearance.BorderSize = 0;
 			this.button9.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-			this.button9.Location = new System.Drawing.Point(62, 85);
-			this.button9.Margin = new System.Windows.Forms.Padding(0);
+			this.button9.Location = new System.Drawing.Point(0, 110);
+			this.button9.Margin = new System.Windows.Forms.Padding(0, 3, 0, 3);
 			this.button9.Name = "button9";
 			this.button9.Size = new System.Drawing.Size(20, 20);
 			this.button9.TabIndex = 15;
 			this.button9.TabStop = false;
 			this.button9.UseVisualStyleBackColor = true;
-			this.button9.Click += new System.EventHandler(this.createDir_Click);
 			this.button9.Enter += new System.EventHandler(this.NoFocusAllowed);
 			// 
 			// button6
@@ -244,7 +229,8 @@ namespace FileDock
 			this.button6.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
 			this.button6.FlatAppearance.BorderSize = 0;
 			this.button6.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-			this.button6.Location = new System.Drawing.Point(184, 85);
+			this.button6.Location = new System.Drawing.Point(0, 188);
+			this.button6.Margin = new System.Windows.Forms.Padding(0, 3, 0, 3);
 			this.button6.Name = "button6";
 			this.button6.Size = new System.Drawing.Size(20, 20);
 			this.button6.TabIndex = 10;
@@ -262,10 +248,10 @@ namespace FileDock
 			this.button4.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
 			this.button4.FlatAppearance.BorderSize = 0;
 			this.button4.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-			this.button4.Location = new System.Drawing.Point(184, 9);
-			this.button4.Margin = new System.Windows.Forms.Padding(0);
+			this.button4.Location = new System.Drawing.Point(0, 6);
+			this.button4.Margin = new System.Windows.Forms.Padding(0, 0, 0, 3);
 			this.button4.Name = "button4";
-			this.button4.Size = new System.Drawing.Size(20, 19);
+			this.button4.Size = new System.Drawing.Size(20, 20);
 			this.button4.TabIndex = 6;
 			this.button4.TabStop = false;
 			this.button4.TextAlign = System.Drawing.ContentAlignment.TopLeft;
@@ -273,30 +259,14 @@ namespace FileDock
 			this.button4.Click += new System.EventHandler(this.close_Click);
 			this.button4.Enter += new System.EventHandler(this.NoFocusAllowed);
 			// 
-			// button3
-			// 
-			this.button3.BackgroundImage = global::FileDock.Properties.Resources.xpsp2res_2023;
-			this.button3.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-			this.button3.FlatAppearance.BorderSize = 0;
-			this.button3.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-			this.button3.Location = new System.Drawing.Point(2, 85);
-			this.button3.Margin = new System.Windows.Forms.Padding(3, 3, 0, 3);
-			this.button3.Name = "button3";
-			this.button3.Size = new System.Drawing.Size(20, 20);
-			this.button3.TabIndex = 4;
-			this.button3.TabStop = false;
-			this.button3.UseVisualStyleBackColor = true;
-			this.button3.Click += new System.EventHandler(this.search_Click);
-			this.button3.Enter += new System.EventHandler(this.NoFocusAllowed);
-			// 
 			// button2
 			// 
 			this.button2.BackgroundImage = global::FileDock.Properties.Resources.xpsp2res_2020;
 			this.button2.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
 			this.button2.FlatAppearance.BorderSize = 0;
 			this.button2.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-			this.button2.Location = new System.Drawing.Point(22, 85);
-			this.button2.Margin = new System.Windows.Forms.Padding(0);
+			this.button2.Location = new System.Drawing.Point(0, 162);
+			this.button2.Margin = new System.Windows.Forms.Padding(0, 3, 0, 3);
 			this.button2.Name = "button2";
 			this.button2.Size = new System.Drawing.Size(20, 20);
 			this.button2.TabIndex = 5;
@@ -305,6 +275,49 @@ namespace FileDock
 			this.button2.Click += new System.EventHandler(this.refresh_Click);
 			this.button2.Enter += new System.EventHandler(this.NoFocusAllowed);
 			// 
+			// flowLayoutPanel3
+			// 
+			this.flowLayoutPanel3.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+			this.flowLayoutPanel3.Controls.Add(this.button4);
+			this.flowLayoutPanel3.Controls.Add(this.button8);
+			this.flowLayoutPanel3.Controls.Add(this.button11);
+			this.flowLayoutPanel3.Controls.Add(this.button1);
+			this.flowLayoutPanel3.Controls.Add(this.button9);
+			this.flowLayoutPanel3.Controls.Add(this.button7);
+			this.flowLayoutPanel3.Controls.Add(this.button2);
+			this.flowLayoutPanel3.Controls.Add(this.button6);
+			this.flowLayoutPanel3.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
+			this.flowLayoutPanel3.Location = new System.Drawing.Point(179, 3);
+			this.flowLayoutPanel3.Name = "flowLayoutPanel3";
+			this.flowLayoutPanel3.Padding = new System.Windows.Forms.Padding(0, 6, 0, 0);
+			this.flowLayoutPanel3.Size = new System.Drawing.Size(20, 217);
+			this.flowLayoutPanel3.TabIndex = 22;
+			// 
+			// flowLayoutPanel2
+			// 
+			this.flowLayoutPanel2.AutoSize = true;
+			this.flowLayoutPanel2.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+			this.flowLayoutPanel2.Controls.Add(this.flowLayoutPanel1);
+			this.flowLayoutPanel2.Controls.Add(this.listFiles);
+			this.flowLayoutPanel2.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
+			this.flowLayoutPanel2.Location = new System.Drawing.Point(1, 0);
+			this.flowLayoutPanel2.Margin = new System.Windows.Forms.Padding(0);
+			this.flowLayoutPanel2.Name = "flowLayoutPanel2";
+			this.flowLayoutPanel2.Padding = new System.Windows.Forms.Padding(0, 6, 0, 0);
+			this.flowLayoutPanel2.Size = new System.Drawing.Size(175, 442);
+			this.flowLayoutPanel2.TabIndex = 23;
+			// 
+			// flowLayoutPanel4
+			// 
+			this.flowLayoutPanel4.Controls.Add(this.flowLayoutPanel3);
+			this.flowLayoutPanel4.Controls.Add(this.flowLayoutPanel2);
+			this.flowLayoutPanel4.Dock = System.Windows.Forms.DockStyle.Fill;
+			this.flowLayoutPanel4.FlowDirection = System.Windows.Forms.FlowDirection.RightToLeft;
+			this.flowLayoutPanel4.Location = new System.Drawing.Point(0, 0);
+			this.flowLayoutPanel4.Name = "flowLayoutPanel4";
+			this.flowLayoutPanel4.Size = new System.Drawing.Size(202, 455);
+			this.flowLayoutPanel4.TabIndex = 13;
+			// 
 			// moveHandle1
 			// 
 			this.moveHandle1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
@@ -312,7 +325,7 @@ namespace FileDock
 			this.moveHandle1.Cursor = System.Windows.Forms.Cursors.SizeAll;
 			this.moveHandle1.Location = new System.Drawing.Point(-1, 0);
 			this.moveHandle1.Name = "moveHandle1";
-			this.moveHandle1.Size = new System.Drawing.Size(205, 10);
+			this.moveHandle1.Size = new System.Drawing.Size(200, 6);
 			this.moveHandle1.TabIndex = 19;
 			// 
 			// FileDockForm
@@ -321,20 +334,9 @@ namespace FileDock
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.BackColor = System.Drawing.SystemColors.Control;
-			this.ClientSize = new System.Drawing.Size(209, 511);
-			this.Controls.Add(this.button4);
-			this.Controls.Add(this.button10);
-			this.Controls.Add(this.button11);
-			this.Controls.Add(this.flowLayoutPanel1);
-			this.Controls.Add(this.button8);
+			this.ClientSize = new System.Drawing.Size(202, 455);
 			this.Controls.Add(this.moveHandle1);
-			this.Controls.Add(this.button7);
-			this.Controls.Add(this.button1);
-			this.Controls.Add(this.button9);
-			this.Controls.Add(this.button6);
-			this.Controls.Add(this.button3);
-			this.Controls.Add(this.listFiles);
-			this.Controls.Add(this.button2);
+			this.Controls.Add(this.flowLayoutPanel4);
 			this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
 			this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
 			this.Name = "FileDockForm";
@@ -343,15 +345,18 @@ namespace FileDock
 			this.TransparencyKey = System.Drawing.Color.Blue;
 			((System.ComponentModel.ISupportInitialize)(this.fileSystemWatcher1)).EndInit();
 			this.contextMenu1.ResumeLayout(false);
+			this.flowLayoutPanel3.ResumeLayout(false);
+			this.flowLayoutPanel2.ResumeLayout(false);
+			this.flowLayoutPanel2.PerformLayout();
+			this.flowLayoutPanel4.ResumeLayout(false);
+			this.flowLayoutPanel4.PerformLayout();
 			this.ResumeLayout(false);
-			this.PerformLayout();
 
         }
 
         #endregion
 
-			private System.Windows.Forms.Button button3;
-			private System.Windows.Forms.Button button2;
+				private System.Windows.Forms.Button button2;
 			private System.Windows.Forms.Button button4;
 			private System.IO.FileSystemWatcher fileSystemWatcher1;
 			private System.Windows.Forms.Button button6;
@@ -365,9 +370,11 @@ namespace FileDock
 			private System.Windows.Forms.FlowLayoutPanel flowLayoutPanel1;
 			private System.Windows.Forms.Button button1;
 			public System.Windows.Forms.ListView listFiles;
-			private System.Windows.Forms.Button button10;
 			private FileDock.MoveHandle moveHandle1;
 			private System.Windows.Forms.Button button11;
+			private System.Windows.Forms.FlowLayoutPanel flowLayoutPanel3;
+			private System.Windows.Forms.FlowLayoutPanel flowLayoutPanel2;
+			private System.Windows.Forms.FlowLayoutPanel flowLayoutPanel4;
     }
 }
 
