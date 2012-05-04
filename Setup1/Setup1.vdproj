@@ -15,7 +15,13 @@
     {
         "Entry"
         {
-        "MsmKey" = "8:_125DABB7570507750A929926C813BAD5"
+        "MsmKey" = "8:_1346531FA317558E4F86E496BABFF435"
+        "OwnerKey" = "8:_45C6486FD8234AB9A7663CC7767D21D8"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_3C47D1E4B5918ADF18074C7AA4FA8D54"
         "OwnerKey" = "8:_45C6486FD8234AB9A7663CC7767D21D8"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -27,18 +33,6 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_79B6C32F80404592A92C62D0A760CD9F"
-        "OwnerKey" = "8:_UNDEFINED"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_E41081CCDA0E4C39854B118BA0FA8EA3"
-        "OwnerKey" = "8:_UNDEFINED"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
         "MsmKey" = "8:_UNDEFINED"
         "OwnerKey" = "8:_45C6486FD8234AB9A7663CC7767D21D8"
         "MsmSig" = "8:_UNDEFINED"
@@ -46,7 +40,13 @@
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_125DABB7570507750A929926C813BAD5"
+        "OwnerKey" = "8:_1346531FA317558E4F86E496BABFF435"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_UNDEFINED"
+        "OwnerKey" = "8:_3C47D1E4B5918ADF18074C7AA4FA8D54"
         "MsmSig" = "8:_UNDEFINED"
         }
     }
@@ -146,7 +146,7 @@
                 {
                 "Name" = "8:.NET Framework"
                 "Message" = "8:[VSDNETMSG]"
-                "Version" = "8:2.0.50727"
+                "FrameworkVersion" = "8:2.0.50727"
                 "AllowLaterVersions" = "11:FALSE"
                 "InstallUrl" = "8:http://go.microsoft.com/fwlink/?LinkId=9832"
                 }
@@ -154,14 +154,45 @@
         }
         "File"
         {
-            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_125DABB7570507750A929926C813BAD5"
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_1346531FA317558E4F86E496BABFF435"
+            {
+            "AssemblyRegister" = "3:1"
+            "AssemblyIsInGAC" = "11:TRUE"
+            "AssemblyAsmDisplayName" = "8:stdole, Version=7.0.3300.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"
+                "ScatterAssemblies"
+                {
+                    "_1346531FA317558E4F86E496BABFF435"
+                    {
+                    "Name" = "8:stdole.dll"
+                    "Attributes" = "3:512"
+                    }
+                }
+            "SourcePath" = "8:stdole.dll"
+            "TargetName" = "8:"
+            "Tag" = "8:"
+            "Folder" = "8:_A12B7285F5B14FCB936F048F3010C8A5"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:TRUE"
+            "IsolateTo" = "8:"
+            }
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_3C47D1E4B5918ADF18074C7AA4FA8D54"
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
             "AssemblyAsmDisplayName" = "8:AppBars, Version=1.0.0.0, Culture=neutral, processorArchitecture=x86"
                 "ScatterAssemblies"
                 {
-                    "_125DABB7570507750A929926C813BAD5"
+                    "_3C47D1E4B5918ADF18074C7AA4FA8D54"
                     {
                     "Name" = "8:AppBars.dll"
                     "Attributes" = "3:512"
@@ -183,46 +214,6 @@
             "Register" = "3:1"
             "Exclude" = "11:FALSE"
             "IsDependency" = "11:TRUE"
-            "IsolateTo" = "8:"
-            }
-            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_79B6C32F80404592A92C62D0A760CD9F"
-            {
-            "SourcePath" = "8:..\\FileDock\\bin\\Debug\\7-zip.dll"
-            "TargetName" = "8:7-zip.dll"
-            "Tag" = "8:"
-            "Folder" = "8:_A12B7285F5B14FCB936F048F3010C8A5"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:FALSE"
-            "IsDependency" = "11:FALSE"
-            "IsolateTo" = "8:"
-            }
-            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_E41081CCDA0E4C39854B118BA0FA8EA3"
-            {
-            "SourcePath" = "8:..\\FileDock\\bin\\Debug\\7zG.exe"
-            "TargetName" = "8:7zG.exe"
-            "Tag" = "8:"
-            "Folder" = "8:_A12B7285F5B14FCB936F048F3010C8A5"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:FALSE"
-            "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
         }
@@ -284,6 +275,7 @@
         "ProductCode" = "8:{B865723F-24AC-4B34-8C49-C24DF313E420}"
         "PackageCode" = "8:{933526CD-B508-4BC0-B1D9-EE596D58A33B}"
         "UpgradeCode" = "8:{FA5CD851-72DD-42AF-84B0-A642DD10538D}"
+        "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:FALSE"
