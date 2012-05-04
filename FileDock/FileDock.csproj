@@ -50,7 +50,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <PlatformTarget>x86</PlatformTarget>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -77,30 +77,13 @@
     <Compile Include="ConfigForm.Designer.cs">
       <DependentUpon>ConfigForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="CreateDirPanel.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="CreateDirPanel.Designer.cs">
-      <DependentUpon>CreateDirPanel.cs</DependentUpon>
-    </Compile>
-    <Compile Include="CreateFilePanel.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="CreateFilePanel.Designer.cs">
-      <DependentUpon>CreateFilePanel.cs</DependentUpon>
-    </Compile>
     <Compile Include="DriveButton.cs">
       <SubType>UserControl</SubType>
     </Compile>
     <Compile Include="DriveButton.Designer.cs">
       <DependentUpon>DriveButton.cs</DependentUpon>
     </Compile>
-    <Compile Include="FavoritesPanel.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="FavoritesPanel.Designer.cs">
-      <DependentUpon>FavoritesPanel.cs</DependentUpon>
-    </Compile>
+    <Compile Include="DrivePanel.cs" />
     <Compile Include="FileDockForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -119,21 +102,9 @@
       <SubType>Designer</SubType>
       <DependentUpon>ConfigForm.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="CreateDirPanel.resx">
-      <SubType>Designer</SubType>
-      <DependentUpon>CreateDirPanel.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="CreateFilePanel.resx">
-      <SubType>Designer</SubType>
-      <DependentUpon>CreateFilePanel.cs</DependentUpon>
-    </EmbeddedResource>
     <EmbeddedResource Include="DriveButton.resx">
       <DependentUpon>DriveButton.cs</DependentUpon>
       <SubType>Designer</SubType>
-    </EmbeddedResource>
-    <EmbeddedResource Include="FavoritesPanel.resx">
-      <SubType>Designer</SubType>
-      <DependentUpon>FavoritesPanel.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="FileDockForm.resx">
       <SubType>Designer</SubType>
@@ -148,10 +119,6 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
       <SubType>Designer</SubType>
     </EmbeddedResource>
-    <EmbeddedResource Include="SearchPanel.resx">
-      <SubType>Designer</SubType>
-      <DependentUpon>SearchPanel.cs</DependentUpon>
-    </EmbeddedResource>
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
@@ -165,12 +132,6 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
-    </Compile>
-    <Compile Include="SearchPanel.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="SearchPanel.Designer.cs">
-      <DependentUpon>SearchPanel.cs</DependentUpon>
     </Compile>
     <Compile Include="TogglePanel.cs">
       <SubType>UserControl</SubType>
