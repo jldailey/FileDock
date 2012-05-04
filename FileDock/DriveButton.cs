@@ -20,8 +20,10 @@ namespace FileDock {
 				_Selected = value;
 				if (value) {
 					this.BorderStyle = BorderStyle.FixedSingle;
+					this.BackColor = Color.FromArgb(255, 255, 180);
 				} else {
 					this.BorderStyle = BorderStyle.None;
+					this.BackColor = Color.Transparent;
 				}
 			}
 		}
@@ -32,20 +34,20 @@ namespace FileDock {
 			InitializeComponent();
 			Selected = false;
 			string label = drive.Name.ToUpper().Substring(0,1);
-			this.driveLabel.Text = label + ":";
+			this.button1.Text = label + ":";
 
 			switch (drive.DriveType) {
 				case DriveType.CDRom:
-					this.driveIconPanel.BackgroundImage = global::FileDock.Properties.Resources.SHELL32_12;
+					this.button1.BackgroundImage = global::FileDock.Properties.Resources.SHELL32_12;
 					break;
 				case DriveType.Removable:
-					this.driveIconPanel.BackgroundImage = global::FileDock.Properties.Resources.SHELL32_8;
+					this.button1.BackgroundImage = global::FileDock.Properties.Resources.SHELL32_8;
 					break;
 				case DriveType.Network:
-					this.driveIconPanel.BackgroundImage = global::FileDock.Properties.Resources.SHELL32_10;
+					this.button1.BackgroundImage = global::FileDock.Properties.Resources.SHELL32_10;
 					break;
 				default:
-					this.driveIconPanel.BackgroundImage = global::FileDock.Properties.Resources.SHELL32_9;
+					this.button1.BackgroundImage = global::FileDock.Properties.Resources.SHELL32_9;
 					break;
 			}
 			
@@ -59,25 +61,22 @@ namespace FileDock {
 				}
 			};
 			this.MouseHover += showTip;
-			this.driveLabel.MouseHover += showTip;
-			this.driveIconPanel.MouseHover += showTip;
+			this.button1.MouseHover += showTip;
 			EventHandler hideTip = delegate(object sender, EventArgs e)
 			{
 				mTip.Hide(this);
 			};
 			this.MouseLeave += hideTip;
-			this.driveLabel.MouseLeave += hideTip;
-			this.driveIconPanel.MouseLeave += hideTip;
+			this.button1.MouseLeave += hideTip;
 
 			this.Click += new EventHandler(DriveButton_Click);
-			this.driveLabel.Click += new EventHandler(DriveButton_Click);
-			this.driveIconPanel.Click += new EventHandler(DriveButton_Click);
+			this.button1.Click += new EventHandler(DriveButton_Click);
 		}
 
 		void DriveButton_Click(object sender, EventArgs e) {
-			if (BeforeSelectDrive != null) BeforeSelectDrive(this.driveLabel.Text);
+			if (BeforeSelectDrive != null) BeforeSelectDrive(this.button1.Text);
 			this.Selected = true;
-			if (OnSelectDrive != null) OnSelectDrive(this.driveLabel.Text);
+			if (OnSelectDrive != null) OnSelectDrive(this.button1.Text);
 			
 		}
 
