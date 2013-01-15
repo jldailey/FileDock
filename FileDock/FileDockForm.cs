@@ -99,7 +99,7 @@ namespace FileDock {
 						listSem.WaitOne();
 						Debug.Print("Refreshing...");
 						fileSystemWatcher.EnableRaisingEvents = false;
-						this.SuspendLayout();
+						listFiles.BeginUpdate();
 						listFiles.Items.Clear();
 						int maxLen = 30;
 						listFiles.Columns[0].Text = AbbreviatePath(this.currentPath, maxLen);
@@ -158,7 +158,7 @@ namespace FileDock {
 					} catch( Exception e ) {
 						MessageBox.Show("Exception: " + e.ToString());
 					} finally {
-						this.ResumeLayout();
+						listFiles.EndUpdate();
 						listSem.Release();
 					}
 				})); // end RefreshDelegate
