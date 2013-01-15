@@ -1,7 +1,11 @@
-"Monitors are too wide!"
- - Me, five years ago.
+"Monitors are too wide!" - Me, five years ago.
 
-Windows standard design keeps adding more thin, full-width, UI elements (status bars, menu bars, toolbars, bookmark bars, tab bars, etc, etc).
+Windows standard design keeps adding more thin, full-width, UI elements:
+ - Status bars
+ - Menu bars
+ - Toolbars
+ - Bookmark bars
+ - Tab bars, etc, etc.
 
 Monitors keep adding horizontal workspace, but not vertical.
 
