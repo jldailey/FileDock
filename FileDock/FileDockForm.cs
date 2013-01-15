@@ -27,11 +27,11 @@ namespace FileDock {
 		private DrivePanel drives;
 
 		public string currentDrive {
-			get { return this.config["CurrentDrive"]; }
+			get { return this.config["CurrentDrive", "C"]; }
 			set { this.config["CurrentDrive"] = Regex.Replace(value, @"^(\w+):.*$", @"$1"); }
 		}
 		public string currentDirectory {
-			get { return this.config["CurrentDirectory"]; }
+			get { return this.config["CurrentDirectory", ""]; }
 			set { this.config["CurrentDirectory"] = value; }
 		}
 		public string currentPath {
@@ -67,7 +67,7 @@ namespace FileDock {
 		public void refreshFiles() {
 			long delta = DateTime.Now.Ticks - lastRefresh;
 			Debug.Print("Refreshing files...{0}, delta: {1}", currentPath, delta);
-			if( delta < 500000000 ) {
+			if( delta < 5000000 ) {
 				Debug.Print("Aborting double-refresh");
 				return;
 			}
@@ -75,15 +75,17 @@ namespace FileDock {
 			try {
 				// try using the current path
 				try {
-					fileSystemWatcher1.Path = this.currentPath;
+					fileSystemWatcher.Path = this.currentPath;
 				} catch( ArgumentException ) {
 					// if that fails
 					// and we are looking at some subdirectory on the drive
 					if( this.currentDirectory != "" ) {
 						// then try looking at the root of the drive
+						lastRefresh = 0; // allow the recursion to pass the double-refresh check
 						this.currentPath = this.currentDrive + @":\"; // triggers a refresh (and thus recursion)
 					} else { // else we are already looking for the drive root
 						// and its still invalid, so the whole drive is invalid, so fall all the way back to c:\
+						lastRefresh = 0; // allow the recursion to pass the double-refresh check
 						this.currentPath = @"C:\"; // triggers refresh and recursion
 						this.drives.SelectedDrive = "C";
 					}
@@ -91,45 +93,57 @@ namespace FileDock {
 				}
 				savedPaths[this.currentDrive] = this.currentDirectory;
 
-				// repaint the form
-				// this.Refresh();
-
 				// build a new tree asynchronously, so that form can still draw itself while this is updating
-				RefreshDelegate refresh = new RefreshDelegate(delegate() {
+				IAsyncResult res = listFiles.BeginInvoke(new RefreshDelegate(delegate() {
 					try {
 						listSem.WaitOne();
-						fileSystemWatcher1.EnableRaisingEvents = false;
+						Debug.Print("Refreshing...");
+						fileSystemWatcher.EnableRaisingEvents = false;
 						this.SuspendLayout();
 						listFiles.Items.Clear();
 						int maxLen = 30;
 						listFiles.Columns[0].Text = AbbreviatePath(this.currentPath, maxLen);
-						listFiles.ItemChecked += new ItemCheckedEventHandler(listFiles_ItemChecked);
 
 						ListViewItem tmp = listFiles.Items.Add("..");
 						tmp.Tag = "..";
 						tmp.Group = listFiles.Groups[0];
+
+						bool filterHidden = this.config["ShowHidden", "True"] == "False";
 						string[] dirs = Directory.GetDirectories(currentPath);
 						Array.Sort<string>(dirs);
-						List<string> ignore = new List<string>(this.config["IgnoreFiles"].Split(','));
+						List<string> ignore = new List<string>(this.config["IgnoreFiles", ""].Split(','));
 						foreach( string dir in dirs ) {
 							string fname = Path.GetFileName(dir);
+							if( filterHidden ) {
+								DirectoryInfo inf = new DirectoryInfo(dir);
+								if( (inf.Attributes & (FileAttributes.Hidden | FileAttributes.System)) > 0 )
+									continue;
+								if( inf.Name.StartsWith(".") )
+									continue;
+							}
 							ListViewItem node = listFiles.Items.Add(fname);
 							node.ToolTipText = fname;
 							node.Tag = Path.GetFullPath(dir);
 							node.ImageIndex = 0;
 							node.Group = listFiles.Groups[0];
 						}
-						string[] files = Directory.GetFiles(currentPath, "*.*");
+						string[] files = Directory.GetFiles(currentPath, "*");
 						Array.Sort<string>(files);
 						foreach( string file in files ) {
-							// check the ignore list
 							string ext = Path.GetExtension(file);
-							if( ignore.Contains(ext) )
+							// check the ignore list
+							if( ext.Length > 0 && ignore.Contains(ext) ) {
+								Debug.Print("Ignoring: {0} due to ignore list match.", file);
 								continue;
+							}
 							// check for hidden files
-							if( this.config["ShowHidden"] == "False" ) {
+							if( filterHidden ) {
 								FileInfo inf = new FileInfo(file);
-								if( (inf.Attributes & FileAttributes.Hidden) == FileAttributes.Hidden ) {
+								if( inf.Name.StartsWith(".") )
+									continue;
+								if( (inf.Attributes & FileAttributes.Hidden) == FileAttributes.Hidden
+									|| (inf.Attributes & FileAttributes.System) == FileAttributes.System ) {
+									Debug.Print("Hiding: {0} because it is hidden.", file);
 									continue;
 								}
 							}
@@ -139,38 +153,27 @@ namespace FileDock {
 							node.ImageIndex = 1;
 							node.Group = listFiles.Groups[1];
 						}
-						fileSystemWatcher1.EnableRaisingEvents = true;
+						// resume file system events only if we got here without an error
+						fileSystemWatcher.EnableRaisingEvents = true;
 					} catch( Exception e ) {
 						MessageBox.Show("Exception: " + e.ToString());
 					} finally {
 						this.ResumeLayout();
 						listSem.Release();
 					}
-				}); // end RefreshDelegate
-				// begin the async build above
-				IAsyncResult res = listFiles.BeginInvoke(refresh);
+				})); // end RefreshDelegate
 
 			} catch( UnauthorizedAccessException ) {
-				MessageBox.Show("Access denied");
+				MessageBox.Show("Access denied: {0}", currentPath);
 				this.currentDirectory = "";
 			} catch( DirectoryNotFoundException ) {
-				MessageBox.Show("Directory not found: " + currentPath);
+				MessageBox.Show("Directory not found: {0}", currentPath);
 				this.currentDirectory = "";
 				refreshFiles();
 			} catch( IOException e ) {
-				MessageBox.Show("IOError :" + e.ToString());
+				MessageBox.Show("IOError: {0}", e.ToString());
 			}
 		}
-
-		void listFiles_ItemChecked( object sender, ItemCheckedEventArgs e ) {
-			e.Item.Selected = e.Item.Checked;
-			Debug.Print("Checked items: " + listFiles.CheckedItems.Count.ToString());
-			if( listFiles.CheckedItems.Count == 0
-				&& (FileDockForm.ModifierKeys & Keys.Control) == 0 ) {
-				listFiles.CheckBoxes = false;
-			}
-		}
-
 
 		protected override void OnLoad( EventArgs e ) {
 			Debug.Print("FileDockForm.OnLoad()");
@@ -203,22 +206,22 @@ namespace FileDock {
 			listFiles.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
 
 			// set up the file system events that will trigger refreshes
-			fileSystemWatcher1.EnableRaisingEvents = false; // dont start responding yet, until all config is done
-			fileSystemWatcher1.NotifyFilter = NotifyFilters.DirectoryName | NotifyFilters.FileName; // notify about directories as well as files
-			fileSystemWatcher1.Filter = ""; // all files
-			fileSystemWatcher1.Created += new FileSystemEventHandler(delegate( object source, FileSystemEventArgs ev ) {
+			fileSystemWatcher.EnableRaisingEvents = false; // dont start responding yet, until all config is done
+			fileSystemWatcher.IncludeSubdirectories = false;
+			fileSystemWatcher.NotifyFilter = NotifyFilters.DirectoryName | NotifyFilters.FileName | NotifyFilters.Attributes; // notify about directories as well as files
+			fileSystemWatcher.Filter = ""; // all files
+			fileSystemWatcher.Created += new FileSystemEventHandler(delegate( object source, FileSystemEventArgs ev ) {
 				Debug.Print("FileSystemEvent: Created {0}", ev.FullPath);
 				refreshFiles();
 			});
-			fileSystemWatcher1.Deleted += new FileSystemEventHandler(delegate( object source, FileSystemEventArgs ev ) {
+			fileSystemWatcher.Deleted += new FileSystemEventHandler(delegate( object source, FileSystemEventArgs ev ) {
 				Debug.Print("FileSystemEvent: Deleted {0}", ev.FullPath);
 				refreshFiles();
 			});
-			fileSystemWatcher1.Renamed += new RenamedEventHandler(delegate( object source, RenamedEventArgs ev ) {
+			fileSystemWatcher.Renamed += new RenamedEventHandler(delegate( object source, RenamedEventArgs ev ) {
 				Debug.Print("FileSystemEvent: Renamed {0}", ev.FullPath);
 				refreshFiles();
 			});
-
 			// set double-buffering options
 			this.SetExStyles();
 
@@ -228,20 +231,20 @@ namespace FileDock {
 			this.config = new Config(this.configForm, "FileDock\\Instance" + this.InstanceIndex);
 
 			// set some default config values
-			this.config["SingleClick"] = "True";
-			this.config["CurrentDirectory"] = "";
-			this.config["CurrentDrive"] = "C";
-			this.config["SavedPathsMap"] = "";
-			this.config["IgnoreFiles"] = "";
-			this.config["VimLocation"] = @"C:\Program Files\Vim\vim73\gvim.exe";
 
 			// load any saved values from the registry, overwriting the defaults
 			this.config.LoadFromRegistry();
+			this.config.UpdateFormBinding(this.configForm);
+			if( this.config["SingleClick", "False"] == "True" ) {
+				listFiles.Activation = ItemActivation.OneClick;
+			} else {
+				listFiles.Activation = ItemActivation.Standard;
+			}
 
 			// now try to de-serialize the savedPaths mapping
 			try {
 				MemoryStream mem = new MemoryStream();
-				UintDecodeBytes(mem, this.config["SavedPathsMap"]);
+				UintDecodeBytes(mem, this.config["SavedPathsMap", ""]);
 				mem.WriteByte(0x11);
 				mem.Position = 0;
 				savedPaths = (Dictionary<string, string>)(new BinaryFormatter()).Deserialize(mem);
@@ -283,8 +286,10 @@ namespace FileDock {
 			drives.refresh();
 			drives.Changed += delegate( string drive ) {
 				currentDrive = drive.Replace(":","");
-				if( savedPaths.ContainsKey(currentDrive) )
+				if( savedPaths.ContainsKey(currentDrive) ) {
+					Debug.Print("Setting remembered path: {0}", savedPaths[currentDrive]);
 					currentDirectory = savedPaths[currentDrive];
+				}
 				refreshFiles();
 			};
 
@@ -308,11 +313,9 @@ namespace FileDock {
 					}
 				}
 			});
-			makeActionButton(cloneButton, delegate( string[] files ) {
-			});
 			makeActionButton(powerButton, delegate( string[] files ) {
-				fileSystemWatcher1.Dispose();
-				fileSystemWatcher1 = null;
+				fileSystemWatcher.Dispose();
+				fileSystemWatcher = null;
 				this.Close();
 			});
 			makeActionButton(refreshButton, delegate( string[] files ) {
@@ -403,7 +406,8 @@ namespace FileDock {
 					break;
 				case Keys.ControlKey:
 					if( listFiles.CheckedIndices.Count == 0 ) {
-						listFiles.CheckBoxes = false;
+						// Debug.Print("Removing checkboxes because CTRL was raised and nothing is checked.");
+						// listFiles.CheckBoxes = false;
 					}
 					break;
 			}
@@ -413,73 +417,91 @@ namespace FileDock {
 		void listFiles_KeyDown( object sender, KeyEventArgs e ) {
 			switch( e.KeyCode ) {
 				case Keys.ControlKey:
-					listFiles.CheckBoxes = true;
+					// listFiles.CheckBoxes = true;
 					break;
 			}
 		}
 
 		private void listFiles_MouseClick( object sender, MouseEventArgs e ) {
+			return;
+			/*
 			if( (FileDockForm.ModifierKeys & Keys.Control) == 0
 					&& (FileDockForm.ModifierKeys & Keys.Shift) == 0
 					) {
 				if( hoverItem != null ) {
 					if( listFiles.CheckBoxes && listFiles.CheckedItems.Contains(hoverItem) )
 						return;
-					else
+					else {
+						Debug.Print("Activating file from MouseClick");
 						activateFileFolder(hoverItem);
+					}
 				}
 			}
+			*/
 		}
 
 		public delegate void HoverItemChanged();
-		private ListViewItem prevHoverItem;
-		private ListViewItem hoverItem;
-		private ToolTip hoverTip;
+		private ListViewItem hoverItem; // The item currently hovered over.
+		private ToolTip hoverTip; // The tooltip to show over a hovered item.
+		private string getHoverText( ) { // Returns the text to display in the tooltip.
+			if( hoverItem != null ) {
+				FileInfo f = new FileInfo((string)hoverItem.Tag);
+				if( f.Exists ) {
+					double kb = f.Length / 1024.0;
+					return String.Format("{0} - {1:0,0.00} kb", f.Name, kb);
+				}
+			}
+			return null;
+		}
 		private void listFiles_MouseMove( object sender, MouseEventArgs e ) {
 			ListViewItem newHoverItem = listFiles.GetItemAt(e.X, e.Y);
 			if( newHoverItem != null ) {
-				if( prevHoverItem == newHoverItem ) {
+				if( hoverItem == newHoverItem ) {
 					return;
 				}
-				prevHoverItem = hoverItem;
+				if( hoverItem != null ) {
+					Debug.Print("Clearing previous colors");
+					hoverItem.BackColor = Color.White;
+					hoverItem.ForeColor = Color.Black;
+					hoverItem.Font = new Font(hoverItem.Font, 0);
+				}
+
 				hoverItem = newHoverItem;
-				Debug.Print("Forcing focus on listFiles");
-				SendMessage(this.Handle, 0x086, 1, 0); // force focus
-				if( hoverTip != null ) {
-					hoverTip.Hide(listFiles);
-					hoverTip.Dispose();
-					hoverTip = null;
+				if( !this.Focused ) {
+					// Debug.Print("Forcing focus on listFiles");
+					// SendMessage(this.Handle, 0x086, 1, 0); // force focus
 				}
-				hoverTip = new ToolTip(this.components);
-				Point hoverPos = this.PointToClient(e.Location);
-				hoverPos = new Point(hoverPos.X + this.Left + 35, hoverPos.Y);
-				string hoverText = hoverItem.Text;
-				string fname = (string)hoverItem.Tag;
-				if( File.Exists(fname) ) {
-					FileInfo f = new FileInfo(fname);
-					double kb = f.Length / 1024.0;
-					hoverText += String.Format("\n- {0:0,0.00} kb", kb);
+				string hoverText = getHoverText();
+				if( hoverText != null ) {
+					if( hoverTip == null ) {
+						Debug.Print("Creating tooltip");
+						hoverTip = new ToolTip(this.components);
+					}
+					Point hoverPos = this.PointToClient(e.Location);
+					hoverPos = new Point(hoverPos.X + this.Left + 35, hoverPos.Y);
+					Debug.Print("Showing tooltip");
 					hoverTip.Show(hoverText, listFiles, hoverPos);
+				} else if( hoverTip != null ) {
+					Debug.Print("Hiding tooltip");
+					hoverTip.Hide(listFiles);
+					// hoverTip.Dispose();
+					// hoverTip = null;
 				}
-			}
-			if( prevHoverItem != null ) {
-				prevHoverItem.BackColor = Color.White;
-				prevHoverItem.ForeColor = Color.Black;
-				prevHoverItem.Font = new Font(prevHoverItem.Font, 0);
-			}
-			if( hoverItem != null ) {
-				hoverItem.BackColor = Color.FromArgb(255, 255, 180);
-				hoverItem.ForeColor = Color.DarkBlue;
-				hoverItem.Font = new Font(hoverItem.Font, FontStyle.Bold | FontStyle.Underline);
+				if( hoverItem != null ) {
+					Debug.Print("Setting current colors");
+					hoverItem.BackColor = Color.FromArgb(255, 255, 180);
+					hoverItem.ForeColor = Color.DarkBlue;
+					hoverItem.Font = new Font(hoverItem.Font, FontStyle.Bold | FontStyle.Underline);
+				}
 			}
 		}
 
 		void listFiles_MouseLeave( object sender, EventArgs e ) {
-			Debug.Print("closing hoverTip on mouse leave");
+			Debug.Print("Hiding hoverTip on mouse leave");
 			if( hoverTip != null ) {
 				hoverTip.Hide(listFiles);
-				hoverTip.Dispose();
-				hoverTip = null;
+				// hoverTip.Dispose();
+				// hoverTip = null;
 			}
 		}
 
@@ -652,15 +674,15 @@ namespace FileDock {
 
 		// when the user has indicated they want to launch this file or open this directory
 		private void activateFileFolder( ListViewItem node ) {
+			Debug.Print("activateFileFolder called");
 			string new_dir = (String)node.Tag;
 			if( new_dir == "." )
 				return;
 			if( new_dir == ".." ) {
 				DirectoryInfo parent = Directory.GetParent(this.currentPath);
-				if( parent != null )
-					new_dir = parent.ToString();
-				else
+				if( parent == null )
 					return;
+				new_dir = parent.ToString();
 			}
 			if( Directory.Exists(new_dir) ) {
 				this.currentPath = new_dir;
@@ -671,11 +693,13 @@ namespace FileDock {
 
 		// launch a file using the 'start' command-line tool to do the registry/mime lookup
 		private void startFileWithDefaultHandler( string filename ) {
+			Debug.Print("startFile called: {0}",filename);
 			execCmd(@"C:\WINDOWS\System32\cmd.exe", "/c start \"start\" \"" + (filename) + "\"", null, true);
 		}
 
 		// execute something in windows
 		private void execCmd( string cmd, string arguments, string workingDirectory, bool hidden ) {
+			Debug.Print("execCmd called: {0} {1}", cmd, arguments);
 			ProcessStartInfo si = new ProcessStartInfo(cmd);
 			si.Arguments = arguments;
 			if( hidden ) {
@@ -695,10 +719,6 @@ namespace FileDock {
 		
 		// a helper for deleting things safely
 		private void deleteFileOrDirectory( string path ) {
-			MessageBox.Show("Disabled.");
-			return;
-			/*
-			Debug.Print("delete: " + path);
 			if( Directory.Exists(path) ) {
 				Directory.Delete(path, true);
 				removeListViewItemUsingAnimation(path);
@@ -708,7 +728,6 @@ namespace FileDock {
 			} else {
 				MessageBox.Show("Could not find file/directory: " + path);
 			}
-			*/
 		}
 
 		private void removeListViewItemUsingAnimation( string path ) {
@@ -737,6 +756,7 @@ namespace FileDock {
 				configForm = new ConfigForm(this);
 				configForm.Show(this);
 				configForm.Focus();
+				config.UpdateFormBinding(configForm);
 			}
 		}
 
@@ -796,23 +816,22 @@ namespace FileDock {
 				}
 			};
 		}
-		private void tmp() {
-			makeActionButton(
-				vimButton,
-				delegate( string[] files ) {
-				}
-			);
-		}
 
 		private void listFiles_ItemActivate( object sender, EventArgs e ) {
 			foreach( ListViewItem item in listFiles.SelectedItems ) {
+				Debug.Print("Activating file from ItemActivate");
 				activateFileFolder(item);
 			}
 		}
 
 		private void EditFile( string file ) {
 			try {
-				execCmd(this.config["VimLocation"], "--remote-tab-silent \"" + file + "\"", this.currentPath, false);
+				execCmd(
+					this.config["VimLocation", @"C:\Program Files\Vim\vim73\gvim.exe"],
+					"--remote-tab-silent \"" + file + "\"",
+					this.currentPath,
+					false
+				);
 			} catch( Exception ex ) {
 				MessageBox.Show("Failed to launch VIM: " + ex.Message);
 			}

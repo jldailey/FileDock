@@ -96,13 +96,15 @@ namespace FileDock {
 					s += key + ", ";
 					if (mapControls.ContainsKey(key)) {
 						// update the control on the page with the value set in the config
-						Debug.Print("Setting control value for: " + key);
-						SetControlValue(c, GetControlValue(mapControls[key]));
+						if( c != mapControls[key] ) {
+							Debug.Print("Setting control value for: " + key);
+							SetControlValue(c, GetControlValue(mapControls[key]));
+						}
 						// then update our mapping to point to the new control
 						mapControls[key] = c;
 						Debug.Print("mapControls[" + key + "] updated.");
 					} else {
-						// if we have a control to use as a backing store then forget about saving the string
+						// if we have a string saved and a control to use as a backing store then forget about saving the string
 						if (mapStrings.ContainsKey(key)) {
 							Debug.Print("Setting control value for: " + key);
 							SetControlValue(c, mapStrings[key]);
@@ -204,27 +206,34 @@ namespace FileDock {
 		/// <summary>
 		/// Map strings to strings.  Using controls on a form as the data source when possible, or fall back on a string store otherwise.
 		/// </summary>
-		public string this[string name] {
+		public string this[string name, string def] {
 			get {
 				if (mapControls.ContainsKey(name)) {
 					string val = Config.GetControlValue(mapControls[name]);
 					mapStrings[name] = val; // cache the control value in the strings table, in case the form is disposed
-					Debug.Print("mapStrings[" + name + "] = \""+val+"\" (from control)");
+					Debug.Print("config[" + name + "] = \""+val+"\" (from control)");
 					return val;
 				}
-				if (mapStrings.ContainsKey(name)) {
+				// this branch will only be followed in the form is destroyed
+				if( mapStrings.ContainsKey(name) ) {
+					Debug.Print("config[" + name + "] = \"" + mapStrings[name] + "\" (from cache)");
 					return mapStrings[name];
+				} else {
+					Debug.Print("no such config[" + name + "]");
 				}
-				return null;
+				return def;
 			}
+		}
+		public string this[string name] {
+			get { return this[name, null]; }
 			set {
 				// always cache the value in the strings table, in case the form is disposed
-				Debug.Print("mapStrings[" + name + "] = \"" + value + "\" (from setter)");
+				Debug.Print("caching config[" + name + "] = \"" + value + "\" (from setter)");
 				mapStrings[name] = value;
-				
+	
 				// and also store the value in any bound controls
 				if (mapControls.ContainsKey(name)) {
-					Debug.Print("Config storing value in form control: " + value.ToString());
+					Debug.Print("Setting form control: {0} (from setter)", value.ToString());
 					Config.SetControlValue(mapControls[name], value);
 				}
 			}

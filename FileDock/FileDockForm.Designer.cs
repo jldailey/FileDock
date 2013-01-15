@@ -34,7 +34,7 @@ namespace FileDock
 			System.Windows.Forms.ListViewGroup listViewGroup2 = new System.Windows.Forms.ListViewGroup("Files", System.Windows.Forms.HorizontalAlignment.Left);
 			System.Windows.Forms.ListViewGroup listViewGroup3 = new System.Windows.Forms.ListViewGroup("Hidden/System", System.Windows.Forms.HorizontalAlignment.Left);
 			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FileDockForm));
-			this.fileSystemWatcher1 = new System.IO.FileSystemWatcher();
+			this.fileSystemWatcher = new System.IO.FileSystemWatcher();
 			this.listFiles = new System.Windows.Forms.ListView();
 			this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
 			this.contextMenu1 = new System.Windows.Forms.ContextMenuStrip(this.components);
@@ -48,26 +48,26 @@ namespace FileDock
 			this.powerButton = new System.Windows.Forms.Button();
 			this.refreshButton = new System.Windows.Forms.Button();
 			this.flowLayoutPanel3 = new System.Windows.Forms.FlowLayoutPanel();
+			this.debugButton = new System.Windows.Forms.Button();
 			this.flowLayoutPanel2 = new System.Windows.Forms.FlowLayoutPanel();
 			this.flowLayoutPanel4 = new System.Windows.Forms.FlowLayoutPanel();
 			this.moveHandle1 = new FileDock.MoveHandle();
-			this.debugButton = new System.Windows.Forms.Button();
-			((System.ComponentModel.ISupportInitialize)(this.fileSystemWatcher1)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.fileSystemWatcher)).BeginInit();
 			this.contextMenu1.SuspendLayout();
 			this.flowLayoutPanel3.SuspendLayout();
 			this.flowLayoutPanel2.SuspendLayout();
 			this.flowLayoutPanel4.SuspendLayout();
 			this.SuspendLayout();
 			// 
-			// fileSystemWatcher1
+			// fileSystemWatcher
 			// 
-			this.fileSystemWatcher1.EnableRaisingEvents = true;
-			this.fileSystemWatcher1.SynchronizingObject = this;
+			this.fileSystemWatcher.EnableRaisingEvents = true;
+			this.fileSystemWatcher.SynchronizingObject = this;
 			// 
 			// listFiles
 			// 
-			this.listFiles.Activation = System.Windows.Forms.ItemActivation.OneClick;
 			this.listFiles.AllowDrop = true;
+			this.listFiles.CausesValidation = false;
 			this.listFiles.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.columnHeader1});
 			this.listFiles.Font = new System.Drawing.Font("Courier New", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -252,6 +252,20 @@ namespace FileDock
 			this.flowLayoutPanel3.Size = new System.Drawing.Size(20, 185);
 			this.flowLayoutPanel3.TabIndex = 22;
 			// 
+			// debugButton
+			// 
+			this.debugButton.BackgroundImage = global::FileDock.Properties.Resources.SHELL32_240;
+			this.debugButton.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
+			this.debugButton.FlatAppearance.BorderSize = 0;
+			this.debugButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+			this.debugButton.Location = new System.Drawing.Point(0, 162);
+			this.debugButton.Margin = new System.Windows.Forms.Padding(0, 3, 0, 3);
+			this.debugButton.Name = "debugButton";
+			this.debugButton.Size = new System.Drawing.Size(20, 20);
+			this.debugButton.TabIndex = 21;
+			this.debugButton.TabStop = false;
+			this.debugButton.UseVisualStyleBackColor = true;
+			// 
 			// flowLayoutPanel2
 			// 
 			this.flowLayoutPanel2.AutoSize = true;
@@ -287,20 +301,6 @@ namespace FileDock
 			this.moveHandle1.Size = new System.Drawing.Size(200, 6);
 			this.moveHandle1.TabIndex = 19;
 			// 
-			// debugButton
-			// 
-			this.debugButton.BackgroundImage = global::FileDock.Properties.Resources.SHELL32_240;
-			this.debugButton.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-			this.debugButton.FlatAppearance.BorderSize = 0;
-			this.debugButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-			this.debugButton.Location = new System.Drawing.Point(0, 162);
-			this.debugButton.Margin = new System.Windows.Forms.Padding(0, 3, 0, 3);
-			this.debugButton.Name = "debugButton";
-			this.debugButton.Size = new System.Drawing.Size(20, 20);
-			this.debugButton.TabIndex = 21;
-			this.debugButton.TabStop = false;
-			this.debugButton.UseVisualStyleBackColor = true;
-			// 
 			// FileDockForm
 			// 
 			this.AllowDrop = true;
@@ -316,7 +316,7 @@ namespace FileDock
 			this.ShowInTaskbar = false;
 			this.Text = "FileDock";
 			this.TransparencyKey = System.Drawing.Color.Blue;
-			((System.ComponentModel.ISupportInitialize)(this.fileSystemWatcher1)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.fileSystemWatcher)).EndInit();
 			this.contextMenu1.ResumeLayout(false);
 			this.flowLayoutPanel3.ResumeLayout(false);
 			this.flowLayoutPanel2.ResumeLayout(false);
@@ -331,7 +331,7 @@ namespace FileDock
 
 				private System.Windows.Forms.Button refreshButton;
 			private System.Windows.Forms.Button powerButton;
-			private System.IO.FileSystemWatcher fileSystemWatcher1;
+			private System.IO.FileSystemWatcher fileSystemWatcher;
 			private System.Windows.Forms.Button trashButton;
 			private System.Windows.Forms.ColumnHeader columnHeader1;
 			private System.Windows.Forms.Button configButton;
