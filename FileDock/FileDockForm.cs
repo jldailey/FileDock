@@ -222,8 +222,6 @@ namespace FileDock {
 				Debug.Print("FileSystemEvent: Renamed {0}", ev.FullPath);
 				refreshFiles();
 			});
-			// set double-buffering options
-			this.SetExStyles();
 
 			this.InstanceIndex = this.getInstanceIndex();
 
@@ -926,13 +924,6 @@ namespace FileDock {
 
 		[DllImport("user32.dll", CharSet = CharSet.Auto)]
 		public static extern int SendMessage( IntPtr handle, int messg, int wparam, int lparam );
-
-		// Sets Double_Buffering and BorderSelect style
-		public void SetExStyles() {
-			LVS_EX styles = (LVS_EX)SendMessage(listFiles.Handle, (int)LVM.LVM_GETEXTENDEDLISTVIEWSTYLE, 0, 0);
-			styles |= LVS_EX.LVS_EX_DOUBLEBUFFER | LVS_EX.LVS_EX_BORDERSELECT;
-			SendMessage(listFiles.Handle, (int)LVM.LVM_SETEXTENDEDLISTVIEWSTYLE, 0, (int)styles);
-		}
 
 		#endregion
 

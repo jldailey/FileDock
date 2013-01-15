@@ -35,7 +35,7 @@ namespace FileDock
 			System.Windows.Forms.ListViewGroup listViewGroup3 = new System.Windows.Forms.ListViewGroup("Hidden/System", System.Windows.Forms.HorizontalAlignment.Left);
 			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FileDockForm));
 			this.fileSystemWatcher = new System.IO.FileSystemWatcher();
-			this.listFiles = new System.Windows.Forms.ListView();
+			this.listFiles = new MyListView();
 			this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
 			this.contextMenu1 = new System.Windows.Forms.ContextMenuStrip(this.components);
 			this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
@@ -340,7 +340,7 @@ namespace FileDock
 			private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem1;
 			private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem2;
 			private System.Windows.Forms.FlowLayoutPanel flowLayoutPanel1;
-			public System.Windows.Forms.ListView listFiles;
+			public MyListView listFiles;
 			private FileDock.MoveHandle moveHandle1;
 			private System.Windows.Forms.Button vimButton;
 			private System.Windows.Forms.FlowLayoutPanel flowLayoutPanel3;
