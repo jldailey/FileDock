@@ -5,3 +5,4 @@ Backup/*
 */Debug/*
 */Release/*
 *.suo
+*/*.pfx
