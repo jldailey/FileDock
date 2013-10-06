@@ -33,15 +33,8 @@ namespace FileDock {
 			}
 			string text = txtAddIgnore.Text;
 			if( text.Length > 0 ) {
-
-				if (text[0] == '*')
-				{
+				if (text[0] == '*' || text[0] == '.')
 					text = text.Substring(1);
-				}
-				if (text[0] == '.')
-				{
-					text = text.Substring(1);
-				}
 				text = "." + text;
 				if( listIgnore.Items.Contains(text) )
 					return;

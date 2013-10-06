@@ -211,12 +211,12 @@ namespace FileDock {
 				if (mapControls.ContainsKey(name)) {
 					string val = Config.GetControlValue(mapControls[name]);
 					mapStrings[name] = val; // cache the control value in the strings table, in case the form is disposed
-					Debug.Print("config[" + name + "] = \""+val+"\" (from control)");
+					Debug.Print("reading config[" + name + "] = \""+val+"\" (from control)");
 					return val;
 				}
-				// this branch will only be followed in the form is destroyed
+				// this branch will only be followed if the form is destroyed
 				if( mapStrings.ContainsKey(name) ) {
-					Debug.Print("config[" + name + "] = \"" + mapStrings[name] + "\" (from cache)");
+					Debug.Print("reading config[" + name + "] = \"" + mapStrings[name] + "\" (from cache)");
 					return mapStrings[name];
 				} else {
 					Debug.Print("no such config[" + name + "]");

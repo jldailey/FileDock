@@ -15,6 +15,7 @@ using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.IO.Compression;
 using System.Threading;
+using Conductrics;
 
 namespace FileDock {
 	public partial class FileDockForm : AppBar {
@@ -22,9 +23,13 @@ namespace FileDock {
 		public Config config;
 		FileDockForm rightChild;
 		FileDockForm leftChild;
+		FileComparer fileSorter;
 		public bool dockOnLoad = true;
 		public Dictionary<string, string> savedPaths; // maps drives to the last path we visited on that drive
 		private DrivePanel drives;
+		string sessionId;
+		double rewardValue = 1.0;
+		Conductrics.Agent fileSortAgent = new Conductrics.Agent("file-sort");
 
 		public string currentDrive {
 			get { return this.config["CurrentDrive", "C"]; }
@@ -127,10 +132,15 @@ namespace FileDock {
 							node.ImageIndex = 0;
 							node.Group = listFiles.Groups[0];
 						}
-						string[] files = Directory.GetFiles(currentPath, "*");
-						Array.Sort<string>(files);
-						foreach( string file in files ) {
-							string ext = Path.GetExtension(file);
+						List<FileInfo> files = new List<FileInfo>();
+						foreach( string fileName in Directory.GetFiles(currentPath, "*") ) {
+							files.Add(new FileInfo(fileName));
+						}
+						if( fileSorter != null )
+							files.Sort(fileSorter);
+						// files.Sort( (a, b) => a.Length - b.Length );
+						foreach( FileInfo file in files ) {
+							string ext = file.Extension;
 							// check the ignore list
 							if( ext.Length > 0 && ignore.Contains(ext) ) {
 								Debug.Print("Ignoring: {0} due to ignore list match.", file);
@@ -138,18 +148,17 @@ namespace FileDock {
 							}
 							// check for hidden files
 							if( filterHidden ) {
-								FileInfo inf = new FileInfo(file);
-								if( inf.Name.StartsWith(".") )
+								if( file.Name.StartsWith(".") )
 									continue;
-								if( (inf.Attributes & FileAttributes.Hidden) == FileAttributes.Hidden
-									|| (inf.Attributes & FileAttributes.System) == FileAttributes.System ) {
+								if( (file.Attributes & FileAttributes.Hidden) == FileAttributes.Hidden
+									|| (file.Attributes & FileAttributes.System) == FileAttributes.System ) {
 									Debug.Print("Hiding: {0} because it is hidden.", file);
 									continue;
 								}
 							}
-							ListViewItem node = listFiles.Items.Add(Path.GetFileName(file));
-							node.ToolTipText = Path.GetFileName(file);
-							node.Tag = Path.GetFullPath(file);
+							ListViewItem node = listFiles.Items.Add(file.Name);
+							node.ToolTipText = file.Name;
+							node.Tag = file.FullName;
 							node.ImageIndex = 1;
 							node.Group = listFiles.Groups[1];
 						}
@@ -191,6 +200,15 @@ namespace FileDock {
 				this.TopMost = true;
 			}
 			base.OnLoad(e);
+
+			sessionId = Guid.NewGuid().ToString("N").Substring(0, 12);
+			Conductrics.API.Owner = "owner_EQNeYdvBb";
+			Conductrics.API.Key = "api-DfEfOmMFMXJCVAJFwRwXvgLk";
+			FileSortMode bestSort = fileSortAgent.Decide<FileSortMode>(sessionId,
+				FileSortMode.Date, FileSortMode.Name );
+			Debug.Print("Conductrics.Agent('file-sort') says session {1} should sort by: {0}", bestSort, sessionId);
+			fileSorter = new FileComparer(bestSort);
+
 			this.DragDrop += new DragEventHandler(FileDockForm_DragDrop);
 			this.DragOver += new DragEventHandler(FileDockForm_DragOver);
 			this.Enter += new EventHandler(NoFocusAllowed);
@@ -204,6 +222,8 @@ namespace FileDock {
 			listFiles.KeyUp += new KeyEventHandler(listFiles_KeyUp);
 			listFiles.KeyDown += new KeyEventHandler(listFiles_KeyDown);
 			listFiles.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+
+
 
 			// set up the file system events that will trigger refreshes
 			fileSystemWatcher.EnableRaisingEvents = false; // dont start responding yet, until all config is done
@@ -228,11 +248,10 @@ namespace FileDock {
 			this.configForm = new ConfigForm(this);
 			this.config = new Config(this.configForm, "FileDock\\Instance" + this.InstanceIndex);
 
-			// set some default config values
-
 			// load any saved values from the registry, overwriting the defaults
 			this.config.LoadFromRegistry();
 			this.config.UpdateFormBinding(this.configForm);
+
 			if( this.config["SingleClick", "False"] == "True" ) {
 				listFiles.Activation = ItemActivation.OneClick;
 			} else {
@@ -249,7 +268,7 @@ namespace FileDock {
 				mem.Close();
 				mem.Dispose();
 			} catch( SerializationException ) {
-				// pass
+				// ignore serialization failure (savedPaths just remains empty)
 			} catch( Exception ex ) {
 				MessageBox.Show(ex.ToString());
 			}
@@ -302,6 +321,10 @@ namespace FileDock {
 					EditFile(file);
 				}
 			});
+			makeActionButton(sortButton, delegate( string[] files ) {
+				fileSorter.mode = fileSorter.mode == FileSortMode.Name ? FileSortMode.Date : FileSortMode.Name;
+				refreshFiles();
+			});
 			makeActionButton(trashButton, delegate( string[] files ) {
 				if( files.Length == 0 )
 					return;
@@ -312,8 +335,6 @@ namespace FileDock {
 				}
 			});
 			makeActionButton(powerButton, delegate( string[] files ) {
-				fileSystemWatcher.Dispose();
-				fileSystemWatcher = null;
 				this.Close();
 			});
 			makeActionButton(refreshButton, delegate( string[] files ) {
@@ -321,6 +342,7 @@ namespace FileDock {
 				refreshFiles();
 			});
 			makeActionButton(cloneButton, delegate( string[] files ) {
+				fileSortAgent.Reward(sessionId, "clone");
 				if( files.Length == 0 )
 					this.Clone(currentPath);
 				else
@@ -328,6 +350,30 @@ namespace FileDock {
 						if( Directory.Exists(file) )
 							this.Clone(file);
 			});
+
+			makeActionButton(favButton, delegate( string[] files ) {
+				favContextMenu.Show(favButton, 0, 0);
+			});
+			favContextMenu.Items.Clear();
+			List<String> favorites = new List<String>(this.config["Favorites", ""].Split(';'));
+			foreach( string fav in favorites ) {
+				if( fav.Length == 0 ) continue;
+				favContextMenu.Items.Add(new ToolStripLabel(fav,null, false, new EventHandler(delegate (object _source, EventArgs _e) {
+					this.currentPath = fav;
+				})));
+			}
+			favContextMenu.Items.Add(new ToolStripLabel(@"Add New...", null, false, new EventHandler(delegate( object _source, EventArgs _e ) {
+				if( !favorites.Contains(this.currentPath) ) {
+					string path = this.currentPath; // make a local copy to be captured
+					favContextMenu.Items.Insert(favorites.Count - 1,
+						new ToolStripLabel(path, null, false, new EventHandler(delegate( object __source, EventArgs __e ) {
+							this.currentPath = path;
+						}))
+					);
+					favorites.Add(this.currentPath);
+					this.config["Favorites"] = String.Join(";", favorites);
+				}
+			})));
 		}
 
 		protected void Clone( string file ) {
@@ -347,12 +393,13 @@ namespace FileDock {
 			if( this.rightChild != null && !this.rightChild.IsDisposed ) {
 				this.rightChild.Close();
 			}
+			fileSystemWatcher.Dispose();
+			fileSystemWatcher = null;
 			MemoryStream mem = new MemoryStream();
 			(new BinaryFormatter()).Serialize(mem, savedPaths);
 			mem.Position = 0;
-			string s = UintEncodeBytes(mem);
+			this.config["SavedPathsMap"] = UintEncodeBytes(mem);
 			mem.Dispose();
-			this.config["SavedPathsMap"] = s;
 			this.config.SaveToRegistry();
 			if( this.isAppBarRegistered ) {
 				this.UnregisterAppBar();
@@ -673,6 +720,7 @@ namespace FileDock {
 		// when the user has indicated they want to launch this file or open this directory
 		private void activateFileFolder( ListViewItem node ) {
 			Debug.Print("activateFileFolder called");
+			fileSortAgent.Reward(sessionId, "activate");
 			string new_dir = (String)node.Tag;
 			if( new_dir == "." )
 				return;
@@ -714,7 +762,6 @@ namespace FileDock {
 			Debug.Print("Exec returned");
 		}
 
-		
 		// a helper for deleting things safely
 		private void deleteFileOrDirectory( string path ) {
 			if( Directory.Exists(path) ) {
@@ -927,6 +974,9 @@ namespace FileDock {
 
 		#endregion
 
+		private void favButton_Click( object sender, EventArgs e ) {
+		}
+
 	}
 
 	public class ActionHelper : IDisposable {
@@ -961,5 +1011,25 @@ namespace FileDock {
 		}
 	}
 
+	public enum FileSortMode {
+		Name,
+		Date
+	}
+
+	public class FileComparer : IComparer<FileInfo> {
+		public FileSortMode mode;
+		public FileComparer( FileSortMode mode ) {
+			this.mode = mode;
+		}
+		public int Compare( FileInfo a, FileInfo b ) {
+			switch( mode ) {
+				case FileSortMode.Name:
+					return a.Name.CompareTo(b.Name);
+				case FileSortMode.Date:
+					return b.LastWriteTime.CompareTo(a.LastWriteTime);
+			}
+			return 1;
+		}
+	}
 }
 
